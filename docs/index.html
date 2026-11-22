@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Managemint</title>
+<meta name="description" content="A task and project planner for PhD work. Say tasks out loud, see every project on one timeline, and keep your data in your own account.">
+<meta name="theme-color" content="#F8F5F1" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#161311" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="wrap top">
+  <a class="brand" href="./"><img src="icon-192.png" alt="" width="32" height="32">Managemint</a>
+  <nav>
+    <a class="opt" href="#why">Why</a>
+    <a href="#start">Get started</a>
+    <a href="#app">Get the app</a>
+  </nav>
+</header>
+
+<main>
+<div class="wrap intro">
+  <span class="note">Early test version, shared with friends</span>
+  <h1>A task and project planner for PhD work</h1>
+  <p class="lead">Say a task out loud when it comes up and it lands in the right project with the right date. See all your projects on one timeline, and get anything with a date in Apple Calendar, Google Calendar or Outlook.</p>
+  <div class="actions">
+    <a class="btn primary" href="#start">Get started</a>
+    <a class="btn" href="#app">Get the app</a>
+  </div>
+
+  <figure class="figure" aria-label="Example of the timeline view, with made-up projects">
+    <div class="tl-scroll"><div class="tl" aria-hidden="true">
+      <div class="tl-head"><div>All projects</div><div class="tl-months"><span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span></div></div>
+      <div class="tl-row proj c-iris"><div class="name">Dissertation ch. 2</div><div class="lane"><span class="today"></span></div></div>
+      <div class="tl-row c-iris"><div class="name">Data</div><div class="lane"><span class="today"></span><span class="bar done" style="left:2%;width:20%">✓ Clean survey data</span><span class="bar doing" style="left:23%;width:30%;--p:45%">Run main models</span></div></div>
+      <div class="tl-row c-iris"><div class="name">Writing</div><div class="lane"><span class="today"></span><span class="bar" style="left:50%;width:34%">Draft results section</span><span class="ms" style="left:86%">To advisor</span></div></div>
+      <div class="tl-row proj c-teal"><div class="name">APSA proposal</div><div class="lane"><span class="today"></span></div></div>
+      <div class="tl-row c-teal"><div class="name">Tasks</div><div class="lane"><span class="today"></span><span class="bar doing" style="left:5%;width:22%;--p:70%">Write abstract</span><span class="ms" style="left:29%">Deadline</span></div></div>
+      <div class="tl-row proj c-ochre"><div class="name">Teaching</div><div class="lane"><span class="today"></span></div></div>
+      <div class="tl-row c-ochre"><div class="name">Section</div><div class="lane"><span class="today"></span><span class="bar" style="left:33%;width:19%">Grade midterms</span><span class="bar" style="left:72%;width:16%">Final review</span></div></div>
+    </div></div>
+    <figcaption>The timeline on a laptop, with made-up projects.</figcaption>
+  </figure>
+</div>
+
+<section id="why">
+  <div class="wrap">
+    <h2>Why it helps with a PhD</h2>
+    <p class="muted">PhD work is a few big projects with loose deadlines, plus a steady stream of small tasks that show up in meetings, emails and hallways. Managemint is built for that mix.</p>
+    <div class="points">
+      <div><h3>Capture tasks quickly</h3><p>Leaving an advisor meeting, say "send Maria the revised lit review by Friday, and the APSA deadline is January 15." You get two tasks, each with its date and in the right project.</p></div>
+      <div><h3>Due dates and deadlines</h3><p>When you plan to do something and the last day it can be done are kept separate, because a lot of academic work happens in the gap between them.</p></div>
+      <div><h3>One timeline</h3><p>Chapters, papers under review, teaching and the job market on one screen. Drag things when they move.</p></div>
+      <div><h3>Templates for common projects</h3><p>A dissertation chapter, a conference submission or quals prep starts with the usual steps, dated back from the deadline.</p></div>
+      <div><h3>On your calendar</h3><p>Anything with a date shows up in a separate "Managemint" calendar in Apple Calendar, Google Calendar or Outlook, which you can hide whenever you like. No Google sign-in needed.</p></div>
+      <div><h3>Your data stays yours</h3><p>It runs in your own free Cloudflare account. Nobody else, including me, can see your tasks. No ads, no tracking.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="start">
+  <div class="wrap">
+    <h2>Get started</h2>
+    <p class="muted">Each person runs their own copy of Managemint in their own free accounts. Setting it up takes about 15 to 20 minutes on a laptop, mostly creating accounts. You don't need to write any code or use a terminal.</p>
+
+    <ol class="steps">
+      <li>
+        <h3>Create three accounts</h3>
+        <ul>
+          <li>A free <a href="https://github.com/signup">GitHub</a> account. Your copy of Managemint lives here.</li>
+          <li>A free <a href="https://dash.cloudflare.com/sign-up">Cloudflare</a> account. Your server runs here.</li>
+          <li>An AI key. For now this is an Anthropic API key from <a href="https://console.anthropic.com">console.anthropic.com</a>: add $5 of credit, create a key, and set a monthly spending limit under Settings → Limits. Typical use costs well under $1 a month.</li>
+        </ul>
+      </li>
+      <li>
+        <h3>Deploy your server</h3>
+        <p>Click the button and sign in to Cloudflare and GitHub when asked. Cloudflare copies Managemint into your GitHub, creates your server and database, and asks for two values:</p>
+        <table class="table">
+          <thead><tr><th>Value</th><th>What to enter</th></tr></thead>
+          <tbody>
+            <tr><td><code>SETUP_PASSWORD</code></td><td>A password you make up (8 or more characters). You'll use it on your setup page.</td></tr>
+            <tr><td><code>ANTHROPIC_API_KEY</code></td><td>Your AI key from step 1.</td></tr>
+          </tbody>
+        </table>
+        <p class="deploy"><a class="btn primary" href="https://deploy.workers.cloudflare.com/?url=https://github.com/nicocardenasmiller/managemint-app">Deploy to Cloudflare</a></p>
+        <p>When it finishes, Cloudflare shows your server's address. It ends in <code>.workers.dev</code>, for example <code>managemint.yourname.workers.dev</code>. Keep it somewhere handy.</p>
+      </li>
+      <li>
+        <h3>Open your setup page</h3>
+        <p>Go to your server's address followed by <code>/setup</code> and enter your setup password. From there you can:</p>
+        <ul>
+          <li>Check that your AI key works.</li>
+          <li>Add your calendar. Tap <em>Subscribe in Apple Calendar</em>, <em>Add to Google Calendar</em>, or copy the link into Outlook. Your dated tasks then appear in a calendar called "Managemint". It's a private link that only goes one way, and Google Calendar can take up to a day to show changes.</li>
+          <li>Pair your phone (see below).</li>
+          <li>Open Managemint on your laptop.</li>
+        </ul>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<section id="app">
+  <div class="wrap">
+    <h2>Get the app</h2>
+    <p class="muted">Set up your server first. Then install the app on your phone and pair it with a code from your setup page.</p>
+
+    <div class="card">
+      <h3>Open your server</h3>
+      <p class="small">Enter your server's address to open your web app or setup page. This browser remembers it; nothing is sent anywhere.</p>
+      <form class="server-form" id="server-form" novalidate>
+        <input id="server" type="url" inputmode="url" autocomplete="url" autocapitalize="off" spellcheck="false" placeholder="managemint.yourname.workers.dev" aria-label="Your server's address">
+        <button class="btn" type="submit">Save</button>
+      </form>
+      <p class="form-msg" id="server-msg" role="status"></p>
+      <div class="server-links" id="server-links" hidden>
+        <a class="btn primary" id="open-app" href="#">Open the web app</a>
+        <a class="btn" id="open-setup" href="#">Open the setup page</a>
+      </div>
+    </div>
+
+    <div class="tabs" role="tablist" aria-label="Device">
+      <button role="tab" id="tab-android" aria-controls="p-android" aria-selected="false">Android</button>
+      <button role="tab" id="tab-iphone" aria-controls="p-iphone" aria-selected="false">iPhone</button>
+      <button role="tab" id="tab-computer" aria-controls="p-computer" aria-selected="false">Laptop</button>
+    </div>
+
+    <div class="panel" id="p-android" role="tabpanel" aria-labelledby="tab-android">
+      <a class="btn primary" href="https://github.com/nicocardenasmiller/managemint-app/releases/latest/download/managemint.apk">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v12m0 0-5-5m5 5 5-5M5 20h14"/></svg>
+        Download for Android
+      </a>
+      <ol>
+        <li>Open the downloaded file. If Android asks, allow your browser to install apps, then tap <em>Install</em>. Android shows this warning for any app that doesn't come from the Play Store.</li>
+        <li>Open Managemint and tap <em>Scan pairing code</em>.</li>
+        <li>On your laptop's setup page, choose <em>Pair a device</em> and scan the QR code it shows.</li>
+      </ol>
+      <p class="small muted">Older versions and release notes are on the <a href="https://github.com/nicocardenasmiller/managemint-app/releases">releases page</a>. When there's a new version, the app tells you in Settings. Download it from here and install it over the old one; your tasks stay.</p>
+    </div>
+
+    <div class="panel" id="p-iphone" role="tabpanel" aria-labelledby="tab-iphone" hidden>
+      <p>On iPhone, Managemint is a web app that your own server provides. You add it to your Home Screen and it opens like any other app.</p>
+      <ol>
+        <li>In Safari, open your server's address followed by <code>/app/</code>. If you saved your address above, tap <em>Open the web app</em>.</li>
+        <li>Tap the Share button, then <em>Add to Home Screen</em>.</li>
+        <li>Open Managemint from your Home Screen and enter a pairing code from your laptop's setup page (<em>Pair a device</em>).</li>
+      </ol>
+      <p class="small muted">Voice capture can be unreliable in Home Screen web apps on iPhone; typing a task works fine. A proper iPhone app may come later.</p>
+    </div>
+
+    <div class="panel" id="p-computer" role="tabpanel" aria-labelledby="tab-computer" hidden>
+      <p>The laptop version, with the timeline, is also provided by your own server.</p>
+      <ol>
+        <li>On your setup page, choose <em>Open Managemint</em>. It's already signed in on that browser.</li>
+        <li>To get it in its own window, install it. In Chrome or Edge, use <em>Install Managemint</em> in the address bar or menu. In Safari on a Mac, use <em>File → Add to Dock</em>.</li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section id="updates">
+  <div class="wrap">
+    <h2>Updates and feedback</h2>
+    <p class="muted">Your copy doesn't update by itself. When there's a new version, the app says so. Open your copy of Managemint on GitHub and click <em>Sync fork</em>; Cloudflare then updates your server within a few minutes. On Android, also download the new app from this page.</p>
+    <p class="muted">If something breaks or is missing, <a href="https://github.com/nicocardenasmiller/managemint-app/issues/new">open an issue on GitHub</a> or tell Nico directly. Issues are public, so leave out anything private.</p>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>Made by Nico, a PhD student in political science.</p>
+    <p><a href="privacy.html">Privacy</a> · <a href="https://github.com/nicocardenasmiller/managemint-app">Source code</a> (MIT licence) · <a href="https://github.com/nicocardenasmiller/managemint-app/releases">Releases</a></p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  // Tabs: open the one that matches this device.
+  var ids = ["android", "iphone", "computer"];
+  function show(id) {
+    ids.forEach(function (x) {
+      document.getElementById("tab-" + x).setAttribute("aria-selected", x === id ? "true" : "false");
+      document.getElementById("p-" + x).hidden = x !== id;
+    });
+  }
+  ids.forEach(function (x) { document.getElementById("tab-" + x).addEventListener("click", function () { show(x); }); });
+  var ua = navigator.userAgent;
+  var ios = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  show(/Android/.test(ua) ? "android" : ios ? "iphone" : "computer");
+
+  // Server address: kept in this browser only, used to build the two links.
+  var KEY = "managemint.server";
+  var input = document.getElementById("server"), msg = document.getElementById("server-msg"), links = document.getElementById("server-links");
+  function normalize(v) {
+    v = (v || "").trim();
+    if (!v) return null;
+    if (!/^[a-z]+:\/\//i.test(v)) v = "https://" + v;
+    try { var u = new URL(v); } catch (e) { return null; }
+    if (u.protocol !== "https:" || !/\./.test(u.hostname)) return null;
+    return u.origin;
+  }
+  function apply(origin) {
+    document.getElementById("open-app").href = origin + "/app/";
+    document.getElementById("open-setup").href = origin + "/setup";
+    links.hidden = false;
+  }
+  var saved = null;
+  try { saved = localStorage.getItem(KEY); } catch (e) {}
+  if (saved && normalize(saved)) { input.value = saved.replace(/^https:\/\//, ""); apply(saved); }
+  document.getElementById("server-form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var origin = normalize(input.value);
+    if (!origin) { msg.textContent = "That doesn't look like a server address. It usually ends in .workers.dev."; msg.className = "form-msg err"; links.hidden = true; return; }
+    try { localStorage.setItem(KEY, origin); } catch (e) {}
+    input.value = origin.replace(/^https:\/\//, "");
+    msg.textContent = "Saved."; msg.className = "form-msg";
+    apply(origin);
+  });
+})();
+</script>
+</body>
+</html>

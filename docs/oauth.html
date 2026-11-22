@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer"><title>Managemint: connecting Google</title>
+<style>body{font:16px/1.5 system-ui,sans-serif;max-width:36rem;margin:3rem auto;padding:0 1rem;background:#F7F5F0;color:#23211d}</style>
+</head><body>
+<p id="msg">Connecting Google Calendar to your Managemint server…</p>
+<script>
+// Google sends everyone here after "Connect Google Calendar", because each friend's server has its own address.
+// This page stores nothing. It forwards Google's answer to the server named in `state`, and only to an
+// https://<name>.<account>.workers.dev address. That server then checks the state's single-use code it issued.
+// Keep the pattern in sync with RELAY_TARGET in backend/src/google-connect.ts.
+(function () {
+  var TARGET = /^https:\/\/[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.workers\.dev$/;
+  var q = new URLSearchParams(location.search), origin = null;
+  try {
+    var s = (q.get("state") || "").replace(/-/g, "+").replace(/_/g, "/");
+    origin = JSON.parse(atob(s)).o;
+  } catch (e) {}
+  if (typeof origin !== "string" || !TARGET.test(origin)) {
+    document.getElementById("msg").textContent = "This link doesn't point to a Managemint server. Start again from your server's setup page.";
+    return;
+  }
+  location.replace(origin + "/auth/google/callback" + location.search);
+})();
+</script>
+</body></html>

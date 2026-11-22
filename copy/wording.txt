@@ -1,0 +1,1078 @@
+# Managemint wording
+#
+# Every piece of text people see in Managemint lives in this file: the website, the setup page, the web app
+# (laptop and iPhone) and the Android app. Change the text after the colon and leave the name before it alone.
+#
+# How a line works:
+#   desktop.topbar.today: Today
+#   ^ name (don't change)  ^ text (change this)
+#
+# - Words in curly braces, like {name} or {n}, are filled in by the app (a project name, a number). Keep them,
+#   but you can move them around in the sentence.
+# - Some lines come in pairs ending in _one and _other: the first is used for 1 ("1 task"), the second for more.
+# - A few lines are lists split by " | " or by spaces (month names, weekday names). Keep the same number of items.
+# - Website and setup-page lines can contain HTML such as <b>bold</b>, <em>italic</em> or <a href="...">links</a>.
+#   {{REPO}} becomes the public GitHub repository's name.
+# - A line that starts with a space after the colon keeps that space (for example " · undone").
+# - Lines starting with # are notes and are ignored. See "How to edit wording" in README.md for how to publish.
+#
+# After editing, `node copy/check.mjs` (also run by the backend and desktop tests) checks that every name the app
+# uses is here and that nothing here is unused.
+
+# ====================================================================================================
+# WEBSITE (published with release/publish-public.mjs)
+# ====================================================================================================
+
+## home
+site.home.page_title: Managemint
+site.home.description: A task and project planner for PhD work. Say tasks out loud, see every project on one timeline, and keep your data in your own account.
+site.home.nav_why: Why
+site.home.nav_start: Get started
+site.home.nav_app: Get the app
+site.home.badge: Early test version, shared with friends
+site.home.title: A task and project planner for PhD work
+site.home.lead: Say a task out loud when it comes up and it lands in the right project with the right date. See all your projects on one timeline, and get anything with a date in Apple Calendar, Google Calendar or Outlook.
+site.home.button_start: Get started
+site.home.button_app: Get the app
+site.home.example_label: Example of the timeline view, with made-up projects
+site.home.example_all_projects: All projects
+site.home.example_months: <span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span>
+site.home.example_project_1: Dissertation ch. 2
+site.home.example_row_data: Data
+site.home.example_task_1: ✓ Clean survey data
+site.home.example_task_2: Run main models
+site.home.example_row_writing: Writing
+site.home.example_task_3: Draft results section
+site.home.example_milestone_1: To advisor
+site.home.example_project_2: APSA proposal
+site.home.example_row_tasks: Tasks
+site.home.example_task_4: Write abstract
+site.home.example_milestone_2: Deadline
+site.home.example_project_3: Teaching
+site.home.example_row_section: Section
+site.home.example_task_5: Grade midterms
+site.home.example_task_6: Final review
+site.home.example_caption: The timeline on a laptop, with made-up projects.
+site.home.why_title: Why it helps with a PhD
+site.home.why_intro: PhD work is a few big projects with loose deadlines, plus a steady stream of small tasks that show up in meetings, emails and hallways. Managemint is built for that mix.
+site.home.why_capture_title: Capture tasks quickly
+site.home.why_capture: Leaving an advisor meeting, say "send Maria the revised lit review by Friday, and the APSA deadline is January 15." You get two tasks, each with its date and in the right project.
+site.home.why_dates_title: Due dates and deadlines
+site.home.why_dates: When you plan to do something and the last day it can be done are kept separate, because a lot of academic work happens in the gap between them.
+site.home.why_timeline_title: One timeline
+site.home.why_timeline: Chapters, papers under review, teaching and the job market on one screen. Drag things when they move.
+site.home.why_templates_title: Templates for common projects
+site.home.why_templates: A dissertation chapter, a conference submission or quals prep starts with the usual steps, dated back from the deadline.
+site.home.why_calendar_title: On your calendar
+site.home.why_calendar: Anything with a date shows up in a separate "Managemint" calendar in Apple Calendar, Google Calendar or Outlook, which you can hide whenever you like. No Google sign-in needed.
+site.home.why_data_title: Your data stays yours
+site.home.why_data: It runs in your own free Cloudflare account. Nobody else, including me, can see your tasks. No ads, no tracking.
+site.home.start_title: Get started
+site.home.start_intro: Each person runs their own copy of Managemint in their own free accounts. Setting it up takes about 15 to 20 minutes on a laptop, mostly creating accounts. You don't need to write any code or use a terminal.
+site.home.step1_title: Create three accounts
+site.home.step1_github: A free <a href="https://github.com/signup">GitHub</a> account. Your copy of Managemint lives here.
+site.home.step1_cloudflare: A free <a href="https://dash.cloudflare.com/sign-up">Cloudflare</a> account. Your server runs here.
+site.home.step1_ai: An AI key. For now this is an Anthropic API key from <a href="https://console.anthropic.com">console.anthropic.com</a>: add $5 of credit, create a key, and set a monthly spending limit under Settings → Limits. Typical use costs well under $1 a month.
+site.home.step2_title: Deploy your server
+site.home.step2_intro: Click the button and sign in to Cloudflare and GitHub when asked. Cloudflare copies Managemint into your GitHub, creates your server and database, and asks for two values:
+site.home.step2_table_value: Value
+site.home.step2_table_what: What to enter
+site.home.step2_setup_password: A password you make up (8 or more characters). You'll use it on your setup page.
+site.home.step2_ai_key: Your AI key from step 1.
+site.home.step2_button: Deploy to Cloudflare
+site.home.step2_after: When it finishes, Cloudflare shows your server's address. It ends in <code>.workers.dev</code>, for example <code>managemint.yourname.workers.dev</code>. Keep it somewhere handy.
+site.home.step3_title: Open your setup page
+site.home.step3_intro: Go to your server's address followed by <code>/setup</code> and enter your setup password. From there you can:
+site.home.step3_check_key: Check that your AI key works.
+site.home.step3_calendar: Add your calendar. Tap <em>Subscribe in Apple Calendar</em>, <em>Add to Google Calendar</em>, or copy the link into Outlook. Your dated tasks then appear in a calendar called "Managemint". It's a private link that only goes one way, and Google Calendar can take up to a day to show changes.
+site.home.step3_pair: Pair your phone (see below).
+site.home.step3_laptop: Open Managemint on your laptop.
+site.home.app_title: Get the app
+site.home.app_intro: Set up your server first. Then install the app on your phone and pair it with a code from your setup page.
+site.home.server_title: Open your server
+site.home.server_intro: Enter your server's address to open your web app or setup page. This browser remembers it; nothing is sent anywhere.
+site.home.server_label: Your server's address
+site.home.server_save: Save
+site.home.server_open_app: Open the web app
+site.home.server_open_setup: Open the setup page
+site.home.tabs_label: Device
+site.home.tab_android: Android
+site.home.tab_iphone: iPhone
+site.home.tab_laptop: Laptop
+site.home.android_download: Download for Android
+site.home.android_step1: Open the downloaded file. If Android asks, allow your browser to install apps, then tap <em>Install</em>. Android shows this warning for any app that doesn't come from the Play Store.
+site.home.android_step2: Open Managemint and tap <em>Scan pairing code</em>.
+site.home.android_step3: On your laptop's setup page, choose <em>Pair a device</em> and scan the QR code it shows.
+site.home.android_releases: Older versions and release notes are on the <a href="https://github.com/{{REPO}}/releases">releases page</a>. When there's a new version, the app tells you in Settings. Download it from here and install it over the old one; your tasks stay.
+site.home.iphone_intro: On iPhone, Managemint is a web app that your own server provides. You add it to your Home Screen and it opens like any other app.
+site.home.iphone_step1: In Safari, open your server's address followed by <code>/app/</code>. If you saved your address above, tap <em>Open the web app</em>.
+site.home.iphone_step2: Tap the Share button, then <em>Add to Home Screen</em>.
+site.home.iphone_step3: Open Managemint from your Home Screen and enter a pairing code from your laptop's setup page (<em>Pair a device</em>).
+site.home.iphone_voice: Voice capture can be unreliable in Home Screen web apps on iPhone; typing a task works fine. A proper iPhone app may come later.
+site.home.laptop_intro: The laptop version, with the timeline, is also provided by your own server.
+site.home.laptop_step1: On your setup page, choose <em>Open Managemint</em>. It's already signed in on that browser.
+site.home.laptop_step2: To get it in its own window, install it. In Chrome or Edge, use <em>Install Managemint</em> in the address bar or menu. In Safari on a Mac, use <em>File → Add to Dock</em>.
+site.home.updates_title: Updates and feedback
+site.home.updates: Your copy doesn't update by itself. When there's a new version, the app says so. Open your copy of Managemint on GitHub and click <em>Sync fork</em>; Cloudflare then updates your server within a few minutes. On Android, also download the new app from this page.
+site.home.feedback: If something breaks or is missing, <a href="https://github.com/{{REPO}}/issues/new">open an issue on GitHub</a> or tell Nico directly. Issues are public, so leave out anything private.
+site.home.footer_made_by: Made by Nico, a PhD student in political science.
+site.home.footer_links: <a href="privacy.html">Privacy</a> · <a href="https://github.com/{{REPO}}">Source code</a> (MIT licence) · <a href="https://github.com/{{REPO}}/releases">Releases</a>
+site.home.server_error: That doesn't look like a server address. It usually ends in .workers.dev.
+site.home.server_saved: Saved.
+
+## privacy
+site.privacy.page_title: Privacy · Managemint
+site.privacy.nav_start: Get started
+site.privacy.nav_app: Get the app
+site.privacy.title: Privacy
+site.privacy.updated: Last updated November 22, 2026.
+site.privacy.intro: Managemint is a small test project by Nico, shared with friends. There is no company and no central server. Each person runs their own copy in their own accounts, so <strong>Nico can't see your tasks, your calendar or your AI key</strong>.
+site.privacy.storage_title: Where your data is stored
+site.privacy.storage: Your tasks, projects, notes and settings are stored in a database in <strong>your own Cloudflare account</strong>, created when you deploy. The phone app keeps a copy on your phone so it works offline. The web app keeps a sign-in key in your browser. You can delete everything by deleting the Worker and its database in your Cloudflare dashboard.
+site.privacy.services_title: Services your server uses
+site.privacy.services_cloudflare: <strong>Cloudflare</strong> runs your server and stores your database. Cloudflare's own <a href="https://www.cloudflare.com/privacypolicy/">privacy policy</a> applies.
+site.privacy.services_anthropic: <strong>Anthropic</strong> (the AI) receives the text of what you capture, your answers when you set up a project with the assistant, and your planning notes, so it can turn them into tasks and dates. It's your own API key and your own account. Anthropic doesn't train on API data by default. See <a href="https://www.anthropic.com/legal/privacy">Anthropic's privacy policy</a>.
+site.privacy.services_calendar: <strong>Your calendar app</strong>, if you subscribe to your calendar link. Apple Calendar, Google Calendar or Outlook downloads your dated tasks (titles, notes, dates and project names) from your server through a private link. Anyone who has that link can read those tasks, so keep it to yourself; you can replace it with a new one on your setup page at any time.
+site.privacy.services_google: <strong>Google Calendar direct sync</strong>, only on servers that have it set up. Managemint asks only for permission to manage calendars it creates itself. It creates one calendar called "Managemint" and can't see or change your other calendars or your email. You can disconnect on your setup page or in your <a href="https://myaccount.google.com/permissions">Google account settings</a>.
+site.privacy.services_github: <strong>GitHub</strong>: your server checks the public Managemint repository for new versions. That request contains no personal data.
+site.privacy.voice_title: Voice input
+site.privacy.voice: When you speak a task, your phone or browser turns the speech into text with its own speech recognition (Google on Android, Apple in Safari, Google in Chrome). Managemint only receives the text.
+site.privacy.google_app_title: The Google sign-in app
+site.privacy.google_app: The calendar link needs no sign-in. Google Calendar direct sync connections go through a Google app registered by Nico. The sign-in returns to a page on this website, which forwards you straight back to your own server. That page stores nothing. Your calendar token is saved only on your server. Google shows Nico the number of people who have connected, not who they are or what is in their calendars.
+site.privacy.website_title: This website
+site.privacy.website: This site is hosted on GitHub Pages. It has no analytics, no cookies and no third-party scripts or fonts. If you type your server's address into "Open your server", it is saved only in your browser. GitHub may keep standard server logs (such as IP addresses) under <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">its privacy statement</a>.
+site.privacy.feedback_title: Feedback
+site.privacy.feedback: Bug reports and suggestions are GitHub issues, which are public. Don't include task contents or anything private in them.
+site.privacy.questions_title: Questions
+site.privacy.questions: Ask Nico, or <a href="https://github.com/{{REPO}}/issues/new">open an issue</a>.
+site.privacy.footer_made_by: Made by Nico, a PhD student in political science.
+site.privacy.footer_links: <a href="./">Home</a> · <a href="https://github.com/{{REPO}}">Source code</a> (MIT licence)
+
+## oauth
+site.oauth.page_title: Managemint: connecting Google
+site.oauth.connecting: Connecting Google Calendar to your Managemint server…
+site.oauth.bad_link: This link doesn't point to a Managemint server. Start again from your server's setup page.
+
+# ====================================================================================================
+# SETUP PAGE (your server address + /setup and /pair)
+# ====================================================================================================
+setup.page_title: Managemint setup
+setup.welcome_title: Thank you for testing Managemint
+setup.welcome: I hope it makes PhD planning a bit less chaotic. This page sets up your own server. Please tell me what breaks.
+setup.login_title: Unlock this server
+setup.login_help: Enter the setup password you chose when you deployed.
+setup.login_placeholder: Setup password
+setup.login_button: Unlock
+setup.ai_title: 1 · AI assistant
+setup.status_label: Status:
+setup.ai_help: Capture and planning use your own AI key (an Anthropic key for now). Set a monthly spending limit with your provider (Anthropic: console.anthropic.com → Settings → Limits). This server allows <span id="limit"></span> AI requests a day; <span id="used"></span> used today.
+setup.ai_check: Check my key
+setup.google_disconnect_confirm: Disconnect Google Calendar? Existing events stay; new changes won't sync.
+setup.calendar_title: 2 · Calendar
+setup.calendar_help: Subscribe to your private calendar link and tasks with a date show up in Apple Calendar, Google Calendar or Outlook, in a calendar called "Managemint". It only goes one way: change tasks in Managemint, not in the calendar. Apple Calendar updates every 5 to 15 minutes; Google Calendar can take up to a day.
+setup.feed_apple: Subscribe in Apple Calendar
+setup.feed_google: Add to Google Calendar
+setup.feed_copy: Copy link
+setup.feed_scan: On an iPhone, scan this with the camera to subscribe. In Outlook, choose <b>Add calendar → Subscribe from web</b> and paste the link. Google Calendar's phone app can't add it; use Google Calendar on a computer once and it shows on your phone too.
+setup.feed_private: Keep the link private: anyone who has it can see your dated tasks. If it gets out, make a new one. Calendars using the old link stop updating, so subscribe again with the new one.
+setup.feed_reset: Make a new link
+setup.google_title: Google Calendar direct sync (optional)
+setup.google_help: Instead of the link above, Managemint can write straight to Google Calendar, so changes show up within seconds. Use one or the other, or every task appears twice. Managemint can't see your other calendars. Google will warn that the app isn't verified: choose <b>Advanced → Go to Managemint</b>.
+setup.google_connect: Connect Google Calendar
+setup.google_disconnect: Disconnect
+setup.google_secrets: connected (set up on the server)
+setup.google_connected: connected
+setup.google_not_connected: not connected
+setup.google_reconnect: Reconnect
+setup.feed_load_failed: Couldn't load your calendar link. Reload the page to try again.
+setup.feed_copied: Link copied. Paste it only into your own calendar app.
+setup.feed_copy_prompt: Copy your calendar link:
+setup.feed_reset_confirm: Make a new calendar link? Calendars subscribed to the old link stop updating until you subscribe again.
+setup.feed_reset_done: New link made. Remove the old Managemint calendar from your calendar apps and subscribe again.
+setup.devices_title: 3 · Your phone and other devices
+setup.devices_help: Pair a phone or another computer with a one-time code. Each device gets its own key, which you can remove here if a device is lost.
+setup.devices_pair: Pair a device
+setup.devices_scan: Scan with the Managemint app, or enter this code:
+setup.devices_expires: Expires in {time}.
+setup.use_title: 4 · Use it
+setup.use_help: The desktop app is already signed in on this browser. Install it from your browser's menu (Chrome: Install; Safari: File → Add to Dock).
+setup.use_open: Open Managemint
+setup.use_version: Server version {version}{update}.
+setup.use_update:  · <b>update available</b>: open your copy on GitHub and click "Sync fork"
+setup.browser_on: Browser on {device}
+setup.device_computer: computer
+setup.unreachable: Couldn't reach the server: {error}
+setup.ai_key_added: key added
+setup.ai_no_key: no key: add ANTHROPIC_API_KEY in Cloudflare → your Worker → Settings → Variables
+setup.device_line: {name} · last used {date}
+setup.device_this_browser:  (this browser)
+setup.device_never: never
+setup.device_remove: Remove
+setup.device_remove_confirm: Remove {name}? It will need to be paired again.
+setup.login_too_many: Too many tries. Wait an hour and try again.
+setup.login_wrong: That isn't the setup password.
+setup.ai_checking: checking…
+setup.ai_working: working
+setup.pair_page_title: Pair with Managemint
+setup.pair_title: Pair this device
+setup.pair_android: <b>Android:</b> open the Managemint app and choose <b>Scan code</b>.
+setup.pair_browser: <b>Use it in this browser:</b>
+setup.pair_sign_in: Sign in this browser
+setup.pair_failed: That code didn't work. Make a new one on the setup page.
+
+# ====================================================================================================
+# SERVER MESSAGES (shown on the setup page, in the apps and in calendars)
+# ====================================================================================================
+server.google_missing_keys: Google isn't set up on this server (GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET missing).
+server.google_cancelled: Google sign-in was cancelled.
+server.google_wrong_server: This sign-in link isn't for this server. Start again from the setup page.
+server.google_expired: This sign-in expired or was already used. Start again from the setup page.
+server.google_refused: Google refused the sign-in ({status}). Try again.
+server.google_no_refresh: Google didn't return a long-term permission. Remove Managemint at myaccount.google.com/permissions and try again.
+server.google_no_scope: Calendar permission wasn't granted. Try again and tick the calendar box.
+server.google_calendar_description: Tasks, due dates and deadlines from Managemint. Edits here are overwritten.
+server.google_calendar_failed: Couldn't create the Managemint calendar ({status}).
+server.google_connected: Google Calendar connected. Tasks with dates will appear in a calendar called Managemint.
+server.no_setup_password: No setup password is set on this server (SETUP_PASSWORD).
+server.too_many_attempts: too many attempts, try again in an hour
+server.wrong_password: wrong password
+server.pair_code_bad: That code is wrong, expired or already used. Make a new one on the setup page.
+server.ai_no_key: No AI key on this server.
+server.ai_unreachable: Couldn't reach Anthropic. Try again.
+server.ai_key_rejected: Anthropic rejected the key. Check ANTHROPIC_API_KEY in Cloudflare.
+server.ai_status: Anthropic answered {status}.
+server.google_server_secrets: Google is set up with server secrets here; remove them with wrangler instead.
+server.daily_limit: Daily limit of {limit} AI requests reached. It resets at midnight UTC.
+server.onboarding_no_key: This server has no AI key yet (ANTHROPIC_API_KEY).
+server.inbox_delete: Inbox can't be deleted
+server.calendar_not_configured: Google Calendar is not configured (see README, Google Calendar setup)
+server.calendar_deadline: Deadline: {title}
+server.calendar_project: Project: {name}
+
+# ====================================================================================================
+# WEB APP (laptop and iPhone)
+# ====================================================================================================
+
+## topbar
+desktop.topbar.view_timeline: Timeline
+desktop.topbar.view_board: Board
+desktop.topbar.view_list: List
+desktop.topbar.sync_offline: Offline. Changes you make now won't save.
+desktop.topbar.sync_error: Sync error: {error}
+desktop.topbar.sync_syncing: Syncing…
+desktop.topbar.sync_never: Not synced yet
+desktop.topbar.sync_seconds: Synced {n} s ago
+desktop.topbar.sync_minutes: Synced {n} min ago
+desktop.topbar.toggle_sidebar: Toggle sidebar (⌘\)
+desktop.topbar.project_actions: Project actions
+desktop.topbar.save_template: Save as template…
+desktop.topbar.delete_project: Delete project…
+desktop.topbar.view_tabs: View
+desktop.topbar.today_title: Scroll to today (T)
+desktop.topbar.today: Today
+desktop.topbar.zoom: Zoom
+desktop.topbar.zoom_week: Week
+desktop.topbar.zoom_month: Month
+desktop.topbar.zoom_quarter: Quarter
+desktop.topbar.zoom_semester: Semester
+desktop.topbar.group_by: Group by
+desktop.topbar.group_project: By project
+desktop.topbar.group_date: By date
+
+## sidebar
+desktop.sidebar.nav_label: Projects
+desktop.sidebar.search: Search
+desktop.sidebar.add_task: + Add task
+desktop.sidebar.projects_heading: Projects
+desktop.sidebar.project_right_click: Right-click to delete
+desktop.sidebar.new_project_button: + New project
+desktop.sidebar.templates_button: Templates
+desktop.sidebar.shortcuts_button: Shortcuts
+
+## help
+desktop.help.dialog_label: Keyboard shortcuts
+desktop.help.title: Shortcuts
+desktop.help.drag_tip: Timeline: drag a bar to move it, drag its ends to change start or due, drag ◆ or ⚑ on their own. Esc cancels a drag.
+desktop.help.key_search: Search and commands
+desktop.help.key_quick_add: Quick add
+desktop.help.key_views: Timeline / Board / List
+desktop.help.key_next_prev: Next / previous task
+desktop.help.key_open: Open task
+desktop.help.key_edit: Edit title
+desktop.help.key_close: Close panel
+desktop.help.key_done: Mark done
+desktop.help.key_status: Cycle status
+desktop.help.key_delete: Delete (with undo)
+desktop.help.key_undo: Undo
+desktop.help.key_move_day: Move task ±1 day
+desktop.help.key_move_week: Move task ±1 week
+desktop.help.key_today: Timeline: today
+desktop.help.key_zoom: Timeline: zoom
+desktop.help.key_focus: Timeline: focus this project
+desktop.help.key_old_done: Show/hide old done tasks
+desktop.help.key_sidebar: Sidebar
+
+## toasts
+desktop.toasts.dismiss: Dismiss
+
+## mic
+desktop.mic.label: Dictate
+desktop.mic.stop_label: Stop dictating
+desktop.mic.stop: Stop
+
+## checkring
+desktop.checkring.mark_not_done: Mark "{title}" not done
+desktop.checkring.mark_done: Mark "{title}" done
+
+## deleteproject
+desktop.deleteproject.title: Delete "{name}"?
+desktop.deleteproject.has_tasks_one: It has {n} task ({open} open). What should happen to them?
+desktop.deleteproject.has_tasks_other: It has {n} tasks ({open} open). What should happen to them?
+desktop.deleteproject.move_inbox: Move them to Inbox
+desktop.deleteproject.move_inbox_help: Dates and calendar events stay. Sections are removed.
+desktop.deleteproject.delete_tasks: Delete them too
+desktop.deleteproject.delete_tasks_help: Their Google Calendar events are removed.
+desktop.deleteproject.no_tasks: It has no tasks.
+desktop.deleteproject.undo_hint: You can undo this right after (⌘Z or Undo).
+desktop.deleteproject.cancel: Cancel
+desktop.deleteproject.confirm: Delete project
+
+## newproject
+desktop.newproject.title: New project
+desktop.newproject.name_placeholder: Name, e.g. Fiscal turn paper
+desktop.newproject.name_label: Project name
+desktop.newproject.colour: Colour
+desktop.newproject.shown_as_before: Shown as
+desktop.newproject.shown_as_after: next to its tasks.
+desktop.newproject.tip: Tip: the phone's AI routes tasks here when they mention the project's name. Add sections in the List view.
+desktop.newproject.from_template: Start from a template…
+desktop.newproject.cancel: Cancel
+desktop.newproject.create: Create
+
+## scope
+desktop.scope.all: All projects
+desktop.scope.inbox: Inbox
+desktop.scope.today: Today
+desktop.scope.upcoming: Upcoming
+desktop.scope.project: Project
+
+## setup
+desktop.setup.pair_help: Enter a pairing code. Make one on your server's <a href="/setup">setup page</a> under "Pair a device".
+desktop.setup.code_label: Pairing code
+desktop.setup.token_help: Paste an API token (the <code>API_TOKEN</code> value from <code>backend/.dev.vars</code>). It stays on this device.
+desktop.setup.token_placeholder: API token
+desktop.setup.checking: Checking…
+desktop.setup.continue: Continue
+desktop.setup.use_code: Use a pairing code instead
+desktop.setup.use_token: Use an API token instead
+desktop.setup.device_name: Managemint on {device}
+desktop.setup.device_computer: computer
+desktop.setup.code_format: A pairing code has 8 letters and numbers, like KP7Z-9RNP.
+desktop.setup.token_rejected: That token wasn't accepted.
+desktop.setup.code_rejected: That code is wrong, expired or already used. Make a new one on the setup page.
+desktop.setup.too_many: Too many tries. Wait an hour and try again.
+desktop.setup.unreachable: Couldn't reach the server. Check your connection.
+
+## guidelines
+desktop.guidelines.load_failed: Couldn't load your guidelines ({error}).
+desktop.guidelines.save_failed: Couldn't save ({error}).
+desktop.guidelines.offline: offline
+desktop.guidelines.saved: Planning guidelines saved
+desktop.guidelines.title: Planning guidelines
+desktop.guidelines.intro: When the assistant drafts projects, it follows the built-in guidelines below plus your own notes. Your notes win where they disagree. For example: “I write best in the mornings; never plan advisor meetings on Fridays; leave a full week before any committee deadline.”
+desktop.guidelines.placeholder: Your own rules for ordering and dating work
+desktop.guidelines.notes_label: Your planning notes
+desktop.guidelines.dictate: Dictate notes
+desktop.guidelines.builtin: Built-in guidelines
+desktop.guidelines.cancel: Cancel
+desktop.guidelines.saving: Saving…
+desktop.guidelines.save: Save
+
+## palette
+desktop.palette.new_task: New task
+desktop.palette.new_project: New project
+desktop.palette.new_from_template: New project from template
+desktop.palette.onboarding: Set up projects (guided)
+desktop.palette.guidelines: Planning guidelines
+desktop.palette.save_template: Save project as template
+desktop.palette.delete_project: Delete project…
+desktop.palette.task_done: done
+desktop.palette.label: Command palette
+desktop.palette.placeholder: Search tasks, projects, commands
+desktop.palette.kind_task: Task
+desktop.palette.kind_project: Project
+desktop.palette.kind_command: Command
+desktop.palette.no_matches: No matches
+desktop.palette.sync_calendar: Sync calendar (resend every dated task to Google)
+desktop.palette.show_timeline: Show timeline
+desktop.palette.show_board: Show board
+desktop.palette.show_list: Show list
+desktop.palette.go_to: Go to {name}
+desktop.palette.zoom_week: Zoom: week
+desktop.palette.zoom_month: Zoom: month
+desktop.palette.zoom_quarter: Zoom: quarter
+desktop.palette.zoom_semester: Zoom: semester
+desktop.palette.show_old: Show old done tasks
+desktop.palette.hide_old: Hide old done tasks
+desktop.palette.theme: Theme: system / light / dark
+desktop.palette.theme_system: Theme: system
+desktop.palette.theme_light: Theme: light
+desktop.palette.theme_dark: Theme: dark
+desktop.palette.sync_now: Sync now
+desktop.palette.shortcuts: Keyboard shortcuts
+desktop.palette.sign_out: Sign out of this computer
+desktop.palette.sign_out_confirm: Remove the token and cached tasks from this computer?
+desktop.palette.calendar_link: Calendar link (Apple, Google, Outlook)
+
+## quickadd
+desktop.quickadd.no_tasks: No tasks found in that. Try rewording, or ⇧↵ to add it as written.
+desktop.quickadd.parse_failed: Couldn't parse: {error}
+desktop.quickadd.offline: Offline. ⇧↵ adds it as written.
+desktop.quickadd.save_failed: Couldn't save: {error}
+desktop.quickadd.offline_short: offline
+desktop.quickadd.label: Quick add
+desktop.quickadd.placeholder: e.g. email Ana the survey draft friday, deadline for the IRB amendment is Dec 5
+desktop.quickadd.input_label: What do you need to do?
+desktop.quickadd.project_label: Project
+desktop.quickadd.auto_project: Auto project
+desktop.quickadd.hint: sort it out
+desktop.quickadd.hint_plain: add as written
+desktop.quickadd.reading: Reading…
+desktop.quickadd.preview: Preview
+desktop.quickadd.toggle_milestone: Toggle milestone
+desktop.quickadd.milestone: Milestone
+desktop.quickadd.task: Task
+desktop.quickadd.title_label: Title
+desktop.quickadd.remove: Remove this task
+desktop.quickadd.due: Due
+desktop.quickadd.time: Time
+desktop.quickadd.deadline: Deadline
+desktop.quickadd.check_cards: Check the cards, then save.
+desktop.quickadd.save_one: Save task
+desktop.quickadd.save_all: Save all {n}
+
+## taskrow
+desktop.taskrow.milestone: Milestone
+desktop.taskrow.title_label: Title
+desktop.taskrow.priority: Priority
+desktop.taskrow.subtasks: Subtasks
+desktop.taskrow.has_notes: Has notes
+desktop.taskrow.in_progress: In progress
+desktop.taskrow.deadline: Deadline {date}
+desktop.taskrow.late: {n}d late
+
+## dates
+desktop.dates.months: Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec
+desktop.dates.weekdays: Mon Tue Wed Thu Fri Sat Sun
+desktop.dates.today: Today
+desktop.dates.tomorrow: Tomorrow
+desktop.dates.yesterday: Yesterday
+desktop.dates.overdue: overdue {n}d
+desktop.dates.due_today: due today
+desktop.dates.left: {n}d left
+
+## voice
+desktop.voice.unsupported: Voice input isn't available in this browser.
+desktop.voice.blocked: Microphone access was blocked.
+desktop.voice.stopped: Voice input stopped ({error}).
+
+## store
+desktop.store.token_rejected: Token not accepted
+desktop.store.arrived_one: 1 new task from another device
+desktop.store.arrived_other: {n} new tasks from another device
+desktop.store.save_failed: Couldn't save: {error}
+desktop.store.save_failed_offline: Couldn't save (offline)
+desktop.store.retry: Retry
+desktop.store.calendar_not_updated: Saved, but Google Calendar didn't update
+desktop.store.deleted_task: Deleted "{title}"
+desktop.store.undo: Undo
+desktop.store.nothing_to_undo: Nothing to undo
+desktop.store.added_one: 1 task added
+desktop.store.added_other: {n} tasks added
+desktop.store.undo_all: Undo all
+desktop.store.saved_template: Saved template "{name}"
+desktop.store.calendar_failed_one: {n} task didn't reach Google Calendar. ⌘K → Sync calendar to retry.
+desktop.store.calendar_failed_other: {n} tasks didn't reach Google Calendar. ⌘K → Sync calendar to retry.
+desktop.store.calendar_updating: Updating Google Calendar…
+desktop.store.calendar_some_failed: Calendar: {n} of {total} failed
+desktop.store.calendar_up_to_date: Calendar up to date ({n} tasks)
+desktop.store.calendar_sync_failed: Calendar sync failed: {error}
+desktop.store.offline: offline
+desktop.store.deleted_project: Deleted "{name}"
+desktop.store.deleted_project_and_one: Deleted "{name}" and {n} task
+desktop.store.deleted_project_and_other: Deleted "{name}" and {n} tasks
+desktop.store.deleted_project_moved_one: Deleted "{name}"; {n} task moved to Inbox
+desktop.store.deleted_project_moved_other: Deleted "{name}"; {n} tasks moved to Inbox
+
+## templates
+desktop.templates.created: Created "{name}" with {n} tasks
+desktop.templates.create_failed: Couldn't create: {error}
+desktop.templates.offline: offline
+desktop.templates.anchor_default: Start
+desktop.templates.save_failed: Couldn't save: {error}
+desktop.templates.label: Templates
+desktop.templates.save_title: Save as template
+desktop.templates.save_help: Saves the sections, tasks, subtasks and dependencies of
+desktop.templates.save_help_after: , with every date stored as days before or after one anchor. Done tasks become open tasks in the template.
+desktop.templates.template_name: Template name
+desktop.templates.anchor: Anchor (day 0)
+desktop.templates.no_dated: No dated tasks: dates won't be kept
+desktop.templates.anchor_help: Pick the date everything else hangs on, like the defense or a submission deadline. When you use the template you only enter that one date.
+desktop.templates.cancel: Cancel
+desktop.templates.save_button: Save template
+desktop.templates.use_title: New project from template
+desktop.templates.none_yet: No templates yet. Open a project you want to reuse (a paper, a course), then ⌘K → "Save project as template".
+desktop.templates.summary: {tasks} tasks · {sections} sections · anchored on {anchor}
+desktop.templates.delete_confirm: Delete template "{name}"? Projects made from it stay.
+desktop.templates.delete: Delete
+desktop.templates.close: Close
+desktop.templates.project_name: Project name
+desktop.templates.name_placeholder: e.g. Fiscal turn paper
+desktop.templates.anchor_day: {anchor} (day 0)
+desktop.templates.colour: Colour
+desktop.templates.weekend_one: Move {n} weekend date to the Friday before
+desktop.templates.weekend_other: Move {n} weekend dates to the Friday before
+desktop.templates.preview: Preview
+desktop.templates.past: Some dates are already in the past ({date}). Pick a later {anchor} date if that's not intended.
+desktop.templates.back: Back
+desktop.templates.creating: Creating…
+desktop.templates.create: Create project with {n} tasks
+
+## detail
+desktop.detail.status_todo: To do
+desktop.detail.status_doing: Doing
+desktop.detail.status_done: Done
+desktop.detail.status_cancelled: Cancelled
+desktop.detail.priority_none: None
+desktop.detail.priority_none_full: No priority
+desktop.detail.priority_normal_full: Priority
+desktop.detail.priority_high_full: High priority
+desktop.detail.label: Task details
+desktop.detail.title_label: Title
+desktop.detail.close: Close (Esc)
+desktop.detail.subtask_of: ↑ Subtask of {title}
+desktop.detail.project: Project
+desktop.detail.section: Section
+desktop.detail.new_section_prompt: New section name
+desktop.detail.section_none: None
+desktop.detail.new_section: + New section…
+desktop.detail.kind: Kind
+desktop.detail.kind_task: ○ Task
+desktop.detail.kind_milestone: ◆ Milestone
+desktop.detail.status: Status
+desktop.detail.start: Start
+desktop.detail.due_date: Date
+desktop.detail.due: Due
+desktop.detail.due_time: Due time
+desktop.detail.deadline: ⚑ Deadline
+desktop.detail.priority: Priority
+desktop.detail.calendar: Calendar
+desktop.detail.calendar_off: Off for this whole project
+desktop.detail.calendar_show: Show on Google Calendar
+desktop.detail.blocked_by: Blocked by
+desktop.detail.remove_dep: Remove dependency
+desktop.detail.dep_placeholder: Search tasks to add…
+desktop.detail.dep_label: Add a task this one waits for
+desktop.detail.blocks: Blocks
+desktop.detail.subtasks: Subtasks
+desktop.detail.add_subtask: + Add subtask
+desktop.detail.notes: Notes
+desktop.detail.notes_placeholder: Notes
+desktop.detail.created: Created {source} {date}
+desktop.detail.created_voice: from phone (voice)
+desktop.detail.created_template: from template
+desktop.detail.delete: Delete
+
+## onboarding
+desktop.onboarding.stages: 1st year | 2nd year | 3rd year | 4th year | 5th year or later | ABD / writing up
+desktop.onboarding.other_options: Teaching | RA work | Coursework | Conferences | Grant or fellowship applications | Job market
+desktop.onboarding.fixed_date: Fixed date
+desktop.onboarding.date_not_given: date not given
+desktop.onboarding.no_project: The assistant didn't return a project. Add a little more detail and try again.
+desktop.onboarding.no_key: This server has no AI key yet, so it can't draft a plan. You can start from a template instead.
+desktop.onboarding.draft_failed: Couldn't draft a plan ({error}).
+desktop.onboarding.offline: offline
+desktop.onboarding.create_failed: Couldn't create the projects ({error}). Nothing you already created is lost; try again.
+desktop.onboarding.label: Welcome to Managemint
+desktop.onboarding.welcome_title: Welcome to Managemint
+desktop.onboarding.lede: A planner for PhD work, made by Nico, a PhD student. Thanks for trying it.
+desktop.onboarding.why_steps: Break long projects into dated steps.
+desktop.onboarding.why_deadlines: Keep hard deadlines separate from the days you plan to do the work.
+desktop.onboarding.why_voice: Add tasks by voice from your phone.
+desktop.onboarding.private: Your tasks are stored on your own server. No one else can see them.
+desktop.onboarding.skip: Skip
+desktop.onboarding.continue: Continue
+desktop.onboarding.back: Back
+desktop.onboarding.next: Next
+desktop.onboarding.set_up: Set up projects
+desktop.onboarding.questions_title: A few questions
+desktop.onboarding.questions_intro: Your answers are used to draft your first projects. You can edit the draft before anything is saved. Tap the mic to answer by voice.
+desktop.onboarding.q1: 1. Where are you in the program?
+desktop.onboarding.q2: 2. What are you working on this semester?
+desktop.onboarding.q2_placeholder: e.g. second-year paper on coalition bargaining; quals reading list
+desktop.onboarding.answer_voice: Answer by voice
+desktop.onboarding.q3: 3. Fixed dates coming up
+desktop.onboarding.q3_placeholder_first: e.g. paper due to committee
+desktop.onboarding.q3_placeholder: What is it?
+desktop.onboarding.q3_what: What is due
+desktop.onboarding.q3_say: Say what it is
+desktop.onboarding.date_label: Date
+desktop.onboarding.remove_date: Remove this date
+desktop.onboarding.add_date: + Add a date
+desktop.onboarding.q4: 4. What else takes your time?
+desktop.onboarding.q5: 5. When does your semester end?
+desktop.onboarding.optional: (optional)
+desktop.onboarding.guidelines: The draft follows your
+desktop.onboarding.guidelines_link: planning guidelines
+desktop.onboarding.guidelines_after: .
+desktop.onboarding.use_template: Use a template instead
+desktop.onboarding.drafting: Drafting…
+desktop.onboarding.draft: Draft my projects
+desktop.onboarding.thinking: Drafting a plan. This takes about 20 seconds.
+desktop.onboarding.review_title: Here's a draft
+desktop.onboarding.review_intro: Change anything: names, dates, or remove steps you don't need. Untick a project to leave it out.
+desktop.onboarding.include: Include {name}
+desktop.onboarding.project_name: Project name
+desktop.onboarding.colour: Colour
+desktop.onboarding.milestone: Milestone
+desktop.onboarding.task: Task
+desktop.onboarding.deadline: Deadline
+desktop.onboarding.due_date: Due date
+desktop.onboarding.remove_task: Remove {title}
+desktop.onboarding.legend: red date = a real deadline · ◆ milestone
+desktop.onboarding.back_questions: Back to the questions
+desktop.onboarding.creating: Creating…
+desktop.onboarding.create_one: Create project
+desktop.onboarding.create_other: Create projects
+desktop.onboarding.done_title: Done
+desktop.onboarding.created: Created {names}.
+desktop.onboarding.open: Open my projects
+desktop.onboarding.tour_capture_title: Capture
+desktop.onboarding.tour_capture: Tap the mic on your phone and say a task, like “send chapter two to my advisor by Friday”. The assistant fills in the project and date, and you confirm before it's saved.
+desktop.onboarding.tour_projects_title: Projects
+desktop.onboarding.tour_projects: A project is a paper, a chapter, an exam or a class. It has sections, tasks and milestones. Hard deadlines are marked separately from the dates you plan to work on something.
+desktop.onboarding.tour_timeline_title: Timeline
+desktop.onboarding.tour_timeline: On a laptop, the timeline shows all your projects on one calendar, so overlapping weeks are easy to spot.
+desktop.onboarding.tour_calendar_title: Calendar
+desktop.onboarding.tour_calendar: Subscribe to your private calendar link (setup page, or Calendar link in the ⌘K menu) and dated tasks appear in Apple Calendar, Google Calendar or Outlook, in a separate calendar called Managemint. Your other calendars aren't touched.
+desktop.onboarding.laptop: <b>On your laptop:</b> open <code>{address}</code> for the timeline.
+desktop.onboarding.phone: <b>On your phone:</b> pair it from the <a href="/setup">setup page</a> (Android app, or “Add to Home Screen” on iPhone).
+desktop.onboarding.calendar_label: <b>Calendar:</b>
+desktop.onboarding.calendar_link: subscribe to your calendar link
+desktop.onboarding.calendar_after: to see dated tasks in Apple Calendar, Google Calendar or Outlook.
+desktop.onboarding.tour_count: {n} of {total}
+desktop.onboarding.tour_step: Step {n} of {total}
+
+## app
+desktop.app.hiding_old: Hiding tasks done over 14 days ago
+desktop.app.showing_all: Showing all done tasks
+desktop.app.no_date_to_move: This task has no date to move
+desktop.app.projects: Projects
+desktop.app.sync_now: Sync now
+desktop.app.loading: Loading
+desktop.app.views: Views
+desktop.app.add_task: Add a task
+
+## board
+desktop.board.col_todo: To do
+desktop.board.col_doing: Doing
+desktop.board.col_done: Done
+desktop.board.done_on: done {date}
+
+## list
+desktop.list.overdue: Overdue
+desktop.list.today: Today
+desktop.list.tomorrow: Tomorrow
+desktop.list.week: Next 7 days
+desktop.list.later: Later
+desktop.list.no_date: No date
+desktop.list.empty_today: Nothing due today.
+desktop.list.empty: Nothing here yet.
+desktop.list.empty_hint: Press
+desktop.list.empty_hint_after: to add a task, or speak one on your phone.
+desktop.list.rename_prompt: Rename section
+desktop.list.rename: Rename
+desktop.list.delete_confirm: Delete section "{name}"? Its tasks stay in the project.
+desktop.list.delete: Delete
+desktop.list.task_placeholder: Task title, Enter to add, Esc to stop
+desktop.list.add_task: + Add task
+desktop.list.section_placeholder: Section name (e.g. Writing)
+desktop.list.add_section: + Add section
+
+## timeline
+desktop.timeline.no_section: No section
+desktop.timeline.tasks: Tasks
+desktop.timeline.weekday_initials: MTWTFSS
+desktop.timeline.label: Timeline
+desktop.timeline.today: Today
+desktop.timeline.undated_one: {n} task without dates. Click to set dates in the List view.
+desktop.timeline.undated_other: {n} tasks without dates. Click to set dates in the List view.
+desktop.timeline.due: Due {date}
+desktop.timeline.overdue: Overdue
+desktop.timeline.milestone: Milestone: {title}
+desktop.timeline.deadline_title: Deadline {date}: {title}
+desktop.timeline.deadline: Deadline: {title}
+desktop.timeline.empty: Nothing on the timeline yet.
+desktop.timeline.empty_hint: Tasks show up here once they have a date. Add one with
+desktop.timeline.empty_hint_after: , or set dates in the List view.
+
+## calendarfeed
+desktop.calendarfeed.load_failed: Couldn't load your calendar link ({error}).
+desktop.calendarfeed.offline: offline
+desktop.calendarfeed.copied: Calendar link copied
+desktop.calendarfeed.copy_prompt: Copy your calendar link:
+desktop.calendarfeed.reset_confirm: Make a new calendar link? Calendars subscribed to the old link stop updating until you subscribe again.
+desktop.calendarfeed.reset_done: New link made. Subscribe again in your calendar apps.
+desktop.calendarfeed.reset_failed: Couldn't make a new link ({error}).
+desktop.calendarfeed.title: Calendar link
+desktop.calendarfeed.intro: Subscribe to this private link and tasks with a date show up in Apple Calendar, Google Calendar or Outlook, in a calendar called “Managemint”. It only goes one way: change tasks here, not in the calendar. Apple Calendar updates every 5 to 15 minutes; Google Calendar can take up to a day.
+desktop.calendarfeed.apple: Subscribe in Apple Calendar
+desktop.calendarfeed.google: Add to Google Calendar
+desktop.calendarfeed.copy: Copy link
+desktop.calendarfeed.qr_label: QR code of the calendar link
+desktop.calendarfeed.scan: On an iPhone, scan this with the camera to subscribe. In Outlook, choose <b>Add calendar → Subscribe from web</b> and paste the link. Google Calendar's phone app can't add it: add it once on a computer and it shows on your phone too.
+desktop.calendarfeed.private: Keep the link private: anyone who has it can see your dated tasks.
+desktop.calendarfeed.making: Making…
+desktop.calendarfeed.new_link: Make a new link
+desktop.calendarfeed.loading: Loading…
+desktop.calendarfeed.close: Close
+
+# ====================================================================================================
+# ANDROID APP (needs a new APK build)
+# ====================================================================================================
+
+## main
+android.main.tab_today: Today
+android.main.tab_upcoming: Upcoming
+android.main.tab_projects: Projects
+android.main.done_snack: Done · {title}
+android.main.undo: Undo
+android.main.deleted: Deleted {name}
+android.main.deleted_with_tasks: Deleted {name} and its tasks
+android.main.deleted_moved: Deleted {name} · tasks moved to Inbox
+android.main.undo_failed: Couldn't undo: {error}
+android.main.delete_failed: Couldn't delete: {error}. Deleting a project needs a connection.
+android.main.back: Back
+android.main.unsent: {n} changes not synced
+android.main.settings: Settings
+android.main.quick_add: Quick add
+android.main.voice_capture: Voice capture
+
+## notify
+android.notify.channel_reminders: Reminders
+android.notify.channel_reminders_help: At a task's due time
+android.notify.channel_deadlines: Deadlines
+android.notify.channel_deadlines_help: Morning note about deadlines in the next 2 days
+android.notify.channel_captures: Captures
+android.notify.channel_captures_help: Voice captures sorted after being offline
+android.notify.done: Done
+android.notify.snooze: Snooze 1 h
+android.notify.deadline_one: Deadline soon
+android.notify.deadline_other: {n} deadlines soon
+android.notify.capture_done_one: Capture processed: {n} task
+android.notify.capture_done_other: Capture processed: {n} tasks
+android.notify.capture_done_text: Your offline voice capture was sorted into tasks.
+android.notify.undo: Undo
+
+## settings
+android.settings.server_update: Server update available: open your copy on GitHub and click Sync fork.
+android.settings.app_update: App update available: download the new APK from {where}.
+android.settings.releases_page: the Releases page
+android.settings.device_name: Managemint on {device}
+android.settings.paired: Paired and synced.
+android.settings.pairing_failed: Pairing failed
+android.settings.unreachable: Can't reach the server
+android.settings.title: Settings
+android.settings.back: Back
+android.settings.connection: Connection
+android.settings.paired_with: Paired with {server}
+android.settings.pair_help: Make a pairing code on your server's setup page (your server address + /setup → Pair a device).
+android.settings.bad_qr: That QR code isn't a Managemint pairing code.
+android.settings.pairing: Pairing…
+android.settings.scanner_failed: Couldn't open the scanner: {error}. Use Enter code instead.
+android.settings.pair_again: Pair again
+android.settings.scan: Scan pairing code
+android.settings.enter_code: Enter code
+android.settings.onboarding: Welcome tour and guided project setup
+android.settings.hide_advanced: Hide advanced
+android.settings.advanced: Advanced: server address and API token
+android.settings.server_url: Server URL
+android.settings.api_token: API token
+android.settings.token_help: Only if your server uses an API_TOKEN. Stored encrypted on this phone.
+android.settings.checking: Checking…
+android.settings.https_only: The address must start with https:// so the token isn't sent in the clear.
+android.settings.connected: Connected and synced.
+android.settings.unreachable_error: Can't reach the server: {error}
+android.settings.save_test: Save and test
+android.settings.last_synced: Last synced {time}
+android.settings.reminders: Reminders
+android.settings.notifications: Notifications
+android.settings.on: On
+android.settings.notifications_off: Off: you won't get reminders
+android.settings.turn_on: Turn on
+android.settings.exact: Exact reminder times
+android.settings.exact_off: Off: reminders may arrive a few minutes late
+android.settings.allow: Allow
+android.settings.digest: Morning deadline check
+android.settings.digest_sub: {time} · deadlines in the next 2 days
+android.settings.change: Change
+android.settings.recent: Recent captures
+android.settings.no_captures: Nothing captured in the last 24 hours.
+android.settings.undone:  · undone
+android.settings.undo: Undo
+android.settings.version: Managemint {version}
+android.settings.welcome_title: Thank you for testing Managemint
+android.settings.welcome: Managemint runs on your own free server, which you set up once on a laptop (about 15 minutes, no coding). Then pair this phone with the code your server shows.
+android.settings.share_text: Set up Managemint: {link}
+android.settings.share_title: Send the setup link
+android.settings.send_link: Send me the link
+android.settings.open_guide: Open guide
+android.settings.code_title: Enter pairing code
+android.settings.server_address: Server address
+android.settings.code: Code
+android.settings.pair: Pair
+android.settings.feed_old_server: Your server doesn't have a calendar link yet. Update it (Sync fork on GitHub).
+android.settings.feed_load_failed: Couldn't load your calendar link. Check your connection.
+android.settings.calendar_title: Calendar
+android.settings.calendar_help: Subscribe to your private calendar link and tasks with a date show up in Google Calendar, Apple Calendar or Outlook, in a calendar called Managemint. It only goes one way. Google Calendar can take up to a day to show changes, and its phone app can't add a link: tap Add to Google Calendar, or add it once on a computer.
+android.settings.feed_google: Add to Google Calendar
+android.settings.feed_clip_label: Managemint calendar link
+android.settings.feed_copied: Link copied. Paste it only into your own calendar app.
+android.settings.feed_copy: Copy link
+android.settings.feed_share_title: Calendar link
+android.settings.feed_share: Share link
+android.settings.feed_new: Make a new link
+android.settings.feed_private: Keep the link private: anyone who has it can see your dated tasks.
+android.settings.feed_reset_title: Make a new calendar link?
+android.settings.feed_reset_text: Calendars subscribed to the old link stop updating until you subscribe again with the new one.
+android.settings.feed_reset_done: New link made. Remove the old Managemint calendar and subscribe again.
+android.settings.feed_reset_failed: Couldn't make a new link: {error}
+android.settings.feed_reset_confirm: Make new link
+android.settings.cancel: Cancel
+
+## capture
+android.capture.no_speech_recognition: This phone has no speech recognition. Type instead.
+android.capture.close_without_saving: Close without saving
+android.capture.quick_add: Quick add
+android.capture.quick_add_to: Quick add to {name}
+android.capture.review_one: {n} task · swipe to remove
+android.capture.review_other: {n} tasks · swipe to remove
+android.capture.listening: Listening…
+android.capture.listening_for: Listening… for {name}
+android.capture.paused: Paused
+android.capture.sorting: Sorting…
+android.capture.mic_needed: Managemint needs the microphone for voice capture.
+android.capture.open_settings: Open settings
+android.capture.type_instead: Type instead
+android.capture.no_speech: Didn't catch anything.
+android.capture.try_again: Try again
+android.capture.offline: Offline.
+android.capture.close: Close
+android.capture.error: Something went wrong.
+android.capture.save_for_later: Save words for later
+android.capture.auto: Auto
+android.capture.cards_label: {n} tasks
+android.capture.parsing_paused: Parsing paused (no connection). Keep talking; it retries on Done.
+android.capture.hint: Say what you need to do. Say "that's all" when you're done.
+android.capture.keep_talking: Keep talking
+android.capture.save_n: Save {n}
+android.capture.typed_placeholder: Draft lit review tomorrow 3pm, deadline Dec 5
+android.capture.typed_help: Dates, deadlines and projects are picked up like in voice capture. You can fix them before saving.
+android.capture.add: Add
+android.capture.milestone: ◆ milestone
+android.capture.remove: Remove
+android.capture.card_label: Task card: {title}
+android.capture.remove_task: Remove task
+android.capture.resume: Resume
+android.capture.pause: Pause
+android.capture.done: Done
+android.capture.remove_last: Remove last card
+android.capture.undo_all: Undo all ({n})
+android.capture.offline_typed: Offline. Added to {where} as one task.
+android.capture.inbox: Inbox
+android.capture.the_project: the project
+android.capture.offline_saved: Offline. Your words are saved and will be sorted into tasks when you're back online.
+android.capture.saved_for_later: Saved. It will be sorted on the next sync.
+android.capture.will_sync:  (will sync when online)
+
+## projects
+android.projects.next_ms_row: {date} {title} · {n} d
+android.projects.open_count: {n} open
+android.projects.week_deadlines:  · ⚑ {n} this week
+android.projects.new_project: New project
+android.projects.edit_project: Edit project
+android.projects.next_milestone: Next milestone
+android.projects.next_ms: {date} · {n} d
+android.projects.section_open: Open
+android.projects.no_section: No section
+android.projects.section_count: {name} ({n})
+android.projects.nothing_open: Nothing open. Say what's next with the mic.
+android.projects.done_count: Done ({n})
+android.projects.name: Name
+android.projects.colour: Colour
+android.projects.description: What goes here (helps routing)
+android.projects.keywords: Keywords, comma separated
+android.projects.calendar: Show on Google Calendar
+android.projects.calendar_help: Off removes this project's events from the Managemint calendar
+android.projects.delete_project_menu: Delete project…
+android.projects.save_failed: Couldn't save: {error}. Projects need a connection.
+android.projects.save: Save
+android.projects.cancel: Cancel
+android.projects.delete_title: Delete "{name}"?
+android.projects.no_tasks: It has no tasks.
+android.projects.has_tasks_one: It has {n} task. What should happen to them?
+android.projects.has_tasks_other: It has {n} tasks. What should happen to them?
+android.projects.move_inbox: Move them to Inbox
+android.projects.move_inbox_help: Dates and calendar events stay. Sections are removed.
+android.projects.delete_tasks: Delete them too
+android.projects.delete_tasks_help: Their Google Calendar events are removed.
+android.projects.undo_hint: You can undo this right after.
+android.projects.delete_project: Delete project
+
+## lists
+android.lists.offline_one: {n} voice capture saved offline. They'll be sorted into tasks when you're back online.
+android.lists.offline_other: {n} voice captures saved offline. They'll be sorted into tasks when you're back online.
+android.lists.overdue: Overdue ({n})
+android.lists.collapse: Collapse
+android.lists.expand: Expand
+android.lists.today: Today
+android.lists.done_today: Done today ({n})
+android.lists.nothing_today: Nothing planned today
+android.lists.next_deadline: ⚑ {title} in {n} days
+android.lists.nothing_upcoming: Nothing in the next 60 days
+android.lists.no_date: No date ({n})
+
+## components
+android.components.mark_not_done: Mark {title} not done
+android.components.complete: Complete {title}
+android.components.deadline: Deadline
+android.components.not_synced: not synced
+android.components.deadline_row: Deadline: {title}
+android.components.add_date: Add date
+android.components.time: Time
+android.components.priority: Priority
+android.components.priority_label: Priority: {level}
+android.components.priority_high: high
+android.components.priority_medium: medium
+android.components.priority_none: none
+android.components.project_off_calendar: Project off calendar
+android.components.not_on_calendar: Not on calendar
+android.components.on_calendar: On calendar
+android.components.calendar_label: Google Calendar: {state}
+android.components.calendar_off: off
+android.components.calendar_on: on
+android.components.milestone: Milestone
+android.components.task: Task
+android.components.due_date: Due date
+android.components.clear: Clear {what}
+android.components.ok: OK
+android.components.cancel: Cancel
+android.components.today: Today
+android.components.tomorrow: Tomorrow
+android.components.next_week: Next week
+
+## onboarding
+android.onboarding.stages: 1st year | 2nd year | 3rd year | 4th year | 5th year or later | ABD / writing up
+android.onboarding.other_options: Teaching | RA work | Coursework | Conferences | Grant or fellowship applications | Job market
+android.onboarding.tour_capture_title: Capture
+android.onboarding.tour_capture: Tap the mic and say a task, like “send chapter two to my advisor by Friday”. The assistant fills in the project and date, and you confirm before it's saved.
+android.onboarding.tour_projects_title: Projects
+android.onboarding.tour_projects: A project is a paper, a chapter, an exam or a class. It has sections, tasks and milestones. Hard deadlines are marked separately from the dates you plan to work on something.
+android.onboarding.tour_timeline_title: Timeline
+android.onboarding.tour_timeline: On a laptop, open your server's address + /app/ to see all your projects on one timeline.
+android.onboarding.tour_calendar_title: Calendar
+android.onboarding.tour_calendar: Subscribe to your private calendar link (Settings → Calendar, or your server's setup page) and dated tasks appear in Google Calendar, Apple Calendar or Outlook, in a separate calendar called Managemint.
+android.onboarding.welcome_title: Welcome to Managemint
+android.onboarding.lede: A planner for PhD work, made by Nico, a PhD student. Thanks for trying it.
+android.onboarding.why_steps: Break long projects into dated steps.
+android.onboarding.why_deadlines: Keep hard deadlines separate from the days you plan to do the work.
+android.onboarding.why_voice: Add tasks by voice.
+android.onboarding.private: Your tasks are stored on your own server. No one else can see them.
+android.onboarding.continue_button: Continue
+android.onboarding.skip: Skip
+android.onboarding.tour_count: {n} of {total}
+android.onboarding.next: Next
+android.onboarding.set_up: Set up projects
+android.onboarding.back: Back
+android.onboarding.questions_title: A few questions
+android.onboarding.questions_intro: Your answers are used to draft your first projects. You can edit the draft before anything is saved. Tap the mic to answer by voice.
+android.onboarding.q1: 1. Where are you in the program?
+android.onboarding.q2: 2. What are you working on this semester?
+android.onboarding.q2_placeholder: e.g. second-year paper; quals reading list
+android.onboarding.answer_voice: Answer by voice
+android.onboarding.q3: 3. Fixed dates coming up
+android.onboarding.q3_placeholder_first: e.g. paper due to committee
+android.onboarding.q3_placeholder: What is it?
+android.onboarding.q3_say: Say what it is
+android.onboarding.pick_date: Pick a date
+android.onboarding.remove: Remove
+android.onboarding.add_date: + Add a date
+android.onboarding.q4: 4. What else takes your time?
+android.onboarding.thinking: Drafting a plan. This takes about 20 seconds.
+android.onboarding.fixed_date: Fixed date
+android.onboarding.date_not_given: date not given
+android.onboarding.no_project: The assistant didn't return a project. Add a little more detail and try again.
+android.onboarding.draft_failed: Couldn't draft a plan: {error}
+android.onboarding.drafting: Drafting…
+android.onboarding.draft: Draft my projects
+android.onboarding.review_title: Here's a draft
+android.onboarding.review_intro: Rename, change dates (tap a date) or remove steps. Untick a project to leave it out. Red dates are real deadlines.
+android.onboarding.create_failed: Couldn't create the projects: {error}
+android.onboarding.creating: Creating…
+android.onboarding.create_one: Create project
+android.onboarding.create_other: Create {n} projects
+android.onboarding.back_questions: Back to the questions
+android.onboarding.done: Done
+android.onboarding.created: Created {names}.
+android.onboarding.open: Open my projects
+android.onboarding.ok: OK
+android.onboarding.cancel: Cancel
+android.onboarding.no_date: no date · tap to add
+android.onboarding.remove_task: Remove {title}
+
+## dates
+android.dates.weekdays: Mon Tue Wed Thu Fri Sat Sun
+android.dates.months: Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec
+android.dates.today: Today
+android.dates.tomorrow: Tomorrow
+android.dates.yesterday: Yesterday
+android.dates.overdue: overdue {n}d
+android.dates.due_today: today
+android.dates.left: {n}d left
+
+## api
+android.api.not_paired: Pair this phone with your server in Settings
+android.api.unpaired: This phone isn't paired with the server any more. Pair it again in Settings.
+android.api.server_error_text: Server error {code}: {text}
+android.api.code_rejected: That code is wrong, expired or already used. Make a new one on the setup page.
+android.api.too_many: Too many tries. Wait an hour and try again.
+android.api.no_pairing: That server doesn't support pairing yet. Update it (Sync fork on GitHub).
+android.api.server_error: Server error {code}
+android.api.unreachable: Can't reach {server}
+
+## repo
+android.repo.summary_one: {n} task added to {where}
+android.repo.summary_other: {n} tasks added to {where}
+
+## speech
+android.speech.unsupported_language: Speech recognition isn't available for your phone's language.
+android.speech.mic_off: Microphone permission is off.
+
+## widget
+android.widget.voice_capture: Voice capture
+android.widget.quick_add: Quick add
+
+## mic
+android.mic.dictate: Dictate
+android.mic.stop: Stop dictating
+
+## tasksheet
+android.tasksheet.notes: Notes
+android.tasksheet.delete: Delete
+android.tasksheet.done: Done
+
+## manifest
+android.manifest.app_name: Managemint
+android.manifest.voice_capture: Voice capture
+android.manifest.quick_add: Quick add
+android.manifest.widget_description: Mic for voice capture; wider adds quick add

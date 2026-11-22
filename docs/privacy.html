@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Privacy · Managemint</title>
+<meta name="theme-color" content="#F8F5F1" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#161311" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="wrap top">
+  <a class="brand" href="./"><img src="icon-192.png" alt="" width="32" height="32">Managemint</a>
+  <nav>
+    <a href="./#start">Get started</a>
+    <a href="./#app">Get the app</a>
+  </nav>
+</header>
+
+<main class="wrap prose">
+  <h1>Privacy</h1>
+  <p class="small">Last updated November 22, 2026.</p>
+
+  <p>Managemint is a small test project by Nico, shared with friends. There is no company and no central server. Each person runs their own copy in their own accounts, so <strong>Nico can't see your tasks, your calendar or your AI key</strong>.</p>
+
+  <h2>Where your data is stored</h2>
+  <p>Your tasks, projects, notes and settings are stored in a database in <strong>your own Cloudflare account</strong>, created when you deploy. The phone app keeps a copy on your phone so it works offline. The web app keeps a sign-in key in your browser. You can delete everything by deleting the Worker and its database in your Cloudflare dashboard.</p>
+
+  <h2>Services your server uses</h2>
+  <ul>
+    <li><strong>Cloudflare</strong> runs your server and stores your database. Cloudflare's own <a href="https://www.cloudflare.com/privacypolicy/">privacy policy</a> applies.</li>
+    <li><strong>Anthropic</strong> (the AI) receives the text of what you capture, your answers when you set up a project with the assistant, and your planning notes, so it can turn them into tasks and dates. It's your own API key and your own account. Anthropic doesn't train on API data by default. See <a href="https://www.anthropic.com/legal/privacy">Anthropic's privacy policy</a>.</li>
+    <li><strong>Your calendar app</strong>, if you subscribe to your calendar link. Apple Calendar, Google Calendar or Outlook downloads your dated tasks (titles, notes, dates and project names) from your server through a private link. Anyone who has that link can read those tasks, so keep it to yourself; you can replace it with a new one on your setup page at any time.</li>
+    <li><strong>Google Calendar direct sync</strong>, only on servers that have it set up. Managemint asks only for permission to manage calendars it creates itself. It creates one calendar called "Managemint" and can't see or change your other calendars or your email. You can disconnect on your setup page or in your <a href="https://myaccount.google.com/permissions">Google account settings</a>.</li>
+    <li><strong>GitHub</strong>: your server checks the public Managemint repository for new versions. That request contains no personal data.</li>
+  </ul>
+
+  <h2>Voice input</h2>
+  <p>When you speak a task, your phone or browser turns the speech into text with its own speech recognition (Google on Android, Apple in Safari, Google in Chrome). Managemint only receives the text.</p>
+
+  <h2>The Google sign-in app</h2>
+  <p>The calendar link needs no sign-in. Google Calendar direct sync connections go through a Google app registered by Nico. The sign-in returns to a page on this website, which forwards you straight back to your own server. That page stores nothing. Your calendar token is saved only on your server. Google shows Nico the number of people who have connected, not who they are or what is in their calendars.</p>
+
+  <h2>This website</h2>
+  <p>This site is hosted on GitHub Pages. It has no analytics, no cookies and no third-party scripts or fonts. If you type your server's address into "Open your server", it is saved only in your browser. GitHub may keep standard server logs (such as IP addresses) under <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">its privacy statement</a>.</p>
+
+  <h2>Feedback</h2>
+  <p>Bug reports and suggestions are GitHub issues, which are public. Don't include task contents or anything private in them.</p>
+
+  <h2>Questions</h2>
+  <p>Ask Nico, or <a href="https://github.com/nicocardenasmiller/managemint-app/issues/new">open an issue</a>.</p>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>Made by Nico, a PhD student in political science.</p>
+    <p><a href="./">Home</a> · <a href="https://github.com/nicocardenasmiller/managemint-app">Source code</a> (MIT licence)</p>
+  </div>
+</footer>
+</body>
+</html>

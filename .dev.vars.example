@@ -1,0 +1,5 @@
+SETUP_PASSWORD=make-up-a-password # Unlocks your server's setup page (at least 8 characters).
+ANTHROPIC_API_KEY=sk-ant-your-key # Your AI key (an Anthropic API key) from console.anthropic.com. Set a monthly spending limit there.
+# Optional, only for Google Calendar direct sync. Without these the setup page offers the calendar link only.
+# GOOGLE_CLIENT_ID=
+# GOOGLE_CLIENT_SECRET=

@@ -1,0 +1,34 @@
+name = "managemint"
+main = "backend/src/index.ts"
+compatibility_date = "2025-01-01"
+
+# The system prompt (prompt/system_prompt.md) and the wording (copy/wording.txt) are bundled as text.
+[[rules]]
+type = "Text"
+globs = ["**/*.md", "**/*.txt"]
+fallthrough = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "managemint"
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "backend/migrations"
+
+[vars]
+TZ = "America/New_York"
+MODEL = "claude-haiku-5-5"
+PUBLIC_REPO = "nicocardenasmiller/managemint-app"
+GOOGLE_REDIRECT_URI = "https://nicocardenasmiller.github.io/managemint-app/oauth.html"
+
+# Secrets (set with `wrangler secret put NAME`, never committed):
+#   SETUP_PASSWORD       unlocks /setup, where you add your calendar and pair your phone
+#   ANTHROPIC_API_KEY
+#   Optional, only for Google Calendar direct sync: GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET.
+#   Without them the setup page offers the calendar link (Apple, Google, Outlook) only.
+
+# The desktop app (desktop/, built by `npm run build`) is served at /app/.
+# run_worker_first: every request goes through the Worker, which adds security headers to the app's files.
+[assets]
+directory = "desktop/dist"
+binding = "ASSETS"
+run_worker_first = true

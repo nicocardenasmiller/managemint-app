@@ -1,0 +1,36 @@
+/* App-wide styles on top of design/tokens.css (the single source of colours). */
+:root { --font-ui: "Inter Variable", "Inter", system-ui, sans-serif; --font-title: "Newsreader Variable", "Newsreader", Georgia, serif; color-scheme: light; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { color-scheme: dark; --i-clay:var(--text); --i-ochre:var(--text); --i-olive:var(--text); --i-sage:var(--text); --i-teal:var(--text); --i-slate:var(--text); --i-iris:var(--text); --i-plum:var(--text); }
+}
+:root[data-theme="dark"] { color-scheme: dark; --i-clay:var(--text); --i-ochre:var(--text); --i-olive:var(--text); --i-sage:var(--text); --i-teal:var(--text); --i-slate:var(--text); --i-iris:var(--text); --i-plum:var(--text); }
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; }
+body { -webkit-font-smoothing: antialiased; font-feature-settings: "cv11", "tnum"; }
+#app { height: 100%; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+h1, h2, h3 { margin: 0; font-weight: 600; }
+
+.btn { border: 1px solid var(--border-strong); background: var(--surface); border-radius: var(--r-md); padding: 5px 12px; font-size: 13px; line-height: 18px; }
+.btn:hover { background: var(--hover); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.btn.primary:hover { filter: brightness(1.1); }
+.btn.ghost { border-color: transparent; background: transparent; }
+.btn.ghost:hover { background: var(--hover); }
+.btn:disabled { opacity: .5; cursor: default; }
+
+.input { border: 1px solid var(--text-3); background: var(--surface); border-radius: var(--r-md); padding: 5px 8px; font-size: 13px; line-height: 18px; min-width: 0; }
+.input:focus { outline: 2px solid var(--focus); outline-offset: -1px; border-color: transparent; }
+.label { font: 500 12px/16px var(--font-ui); letter-spacing: .01em; color: var(--text-3); }
+.meta { font-size: 13px; line-height: 18px; color: var(--text-2); }
+.page-title { font: 500 26px/32px var(--font-title); letter-spacing: -.01em; }
+.kbd { font: 500 11px/16px var(--font-ui); border: 1px solid var(--border-strong); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; color: var(--text-2); background: var(--surface); }
+.code { font: 600 10px/14px var(--font-ui); letter-spacing: .03em; padding: 1px 4px; border-radius: 3px; background: var(--h-tint); color: var(--h-ink); white-space: nowrap; }
+.danger { color: var(--danger); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+.fresh { animation: fresh 1.5s var(--ease-effects) both; }
+@keyframes fresh { from { background-color: var(--accent-tint); } }
+@media (prefers-reduced-motion: reduce) { .fresh { animation: none; } }
