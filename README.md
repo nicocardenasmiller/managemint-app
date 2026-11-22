@@ -42,7 +42,7 @@ Open your server's address plus **`/setup`** (for example `https://managemint.yo
 
 ## Updates
 
-Your copy doesn't update by itself. When a new version is out, open your copy on GitHub and click **Sync fork**; Cloudflare redeploys it automatically. Database changes are applied during that deploy.
+Your copy doesn't update by itself. When a new version is out, open your copy on GitHub, go to **Actions → Update Managemint → Run workflow**. It copies the latest version into your copy (keeping your Worker and database settings) and Cloudflare redeploys it. Database changes are applied during that deploy. If GitHub asks, click *I understand my workflows, go ahead and enable them* first.
 
 ## Privacy
 

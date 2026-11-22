@@ -1,0 +1,44 @@
+# Updates this copy to the latest Managemint from github.com/nicocardenasmiller/managemint-app.
+# Run it from the Actions tab: "Update Managemint" → Run workflow. Cloudflare then redeploys your server.
+# It keeps your own settings in wrangler.toml (Worker name, database name and id). Nothing runs on its own.
+name: Update Managemint
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  update:
+    if: github.repository != 'nicocardenasmiller/managemint-app'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Copy the latest version, keeping your settings
+        run: |
+          set -eu
+          cp wrangler.toml /tmp/mine.toml
+          git fetch --no-tags https://github.com/nicocardenasmiller/managemint-app main
+          # Replace everything with the latest version, except this folder (GitHub doesn't let an Action change workflows).
+          git rm -rq --ignore-unmatch . ':(exclude).github'
+          git checkout FETCH_HEAD -- . ':(exclude).github'
+          node -e '
+            const fs = require("fs");
+            const mine = fs.readFileSync("/tmp/mine.toml", "utf8");
+            let toml = fs.readFileSync("wrangler.toml", "utf8");
+            for (const key of ["name", "database_name", "database_id"]) {
+              const re = new RegExp("^" + key + "\\s*=.*$", "m");
+              const m = mine.match(re);
+              if (m) toml = toml.replace(re, m[0]);
+            }
+            fs.writeFileSync("wrangler.toml", toml);
+          '
+      - name: Save and push (Cloudflare redeploys)
+        run: |
+          set -eu
+          git config user.name "Managemint update"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then echo "Already up to date."; exit 0; fi
+          git commit -q -m "Update Managemint from nicocardenasmiller/managemint-app"
+          git push

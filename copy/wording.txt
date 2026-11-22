@@ -113,7 +113,7 @@ site.home.laptop_intro: The laptop version, with the timeline, is also provided 
 site.home.laptop_step1: On your setup page, choose <em>Open Managemint</em>. It's already signed in on that browser.
 site.home.laptop_step2: To get it in its own window, install it. In Chrome or Edge, use <em>Install Managemint</em> in the address bar or menu. In Safari on a Mac, use <em>File → Add to Dock</em>.
 site.home.updates_title: Updates and feedback
-site.home.updates: Your copy doesn't update by itself. When there's a new version, the app says so. Open your copy of Managemint on GitHub and click <em>Sync fork</em>; Cloudflare then updates your server within a few minutes. On Android, also download the new app from this page.
+site.home.updates: Your copy doesn't update by itself. When there's a new version, the app says so. Open your copy of Managemint on GitHub, go to <em>Actions → Update Managemint → Run workflow</em>; Cloudflare then updates your server within a few minutes. On Android, also download the new app from this page.
 site.home.feedback: If something breaks or is missing, <a href="https://github.com/{{REPO}}/issues/new">open an issue on GitHub</a> or tell Nico directly. Issues are public, so leave out anything private.
 site.home.footer_made_by: Made by Nico, a PhD student in political science.
 site.home.footer_links: <a href="privacy.html">Privacy</a> · <a href="https://github.com/{{REPO}}">Source code</a> (MIT licence) · <a href="https://github.com/{{REPO}}/releases">Releases</a>
@@ -198,7 +198,7 @@ setup.use_title: 4 · Use it
 setup.use_help: The desktop app is already signed in on this browser. Install it from your browser's menu (Chrome: Install; Safari: File → Add to Dock).
 setup.use_open: Open Managemint
 setup.use_version: Server version {version}{update}.
-setup.use_update:  · <b>update available</b>: open your copy on GitHub and click "Sync fork"
+setup.use_update:  · <b>update available</b>: on GitHub, open your copy → Actions → "Update Managemint" → Run workflow
 setup.browser_on: Browser on {device}
 setup.device_computer: computer
 setup.unreachable: Couldn't reach the server: {error}
@@ -775,7 +775,7 @@ android.notify.capture_done_text: Your offline voice capture was sorted into tas
 android.notify.undo: Undo
 
 ## settings
-android.settings.server_update: Server update available: open your copy on GitHub and click Sync fork.
+android.settings.server_update: Server update available: on GitHub, open your copy → Actions → Update Managemint → Run workflow.
 android.settings.app_update: App update available: download the new APK from {where}.
 android.settings.releases_page: the Releases page
 android.settings.device_name: Managemint on {device}
@@ -831,7 +831,7 @@ android.settings.code_title: Enter pairing code
 android.settings.server_address: Server address
 android.settings.code: Code
 android.settings.pair: Pair
-android.settings.feed_old_server: Your server doesn't have a calendar link yet. Update it (Sync fork on GitHub).
+android.settings.feed_old_server: Your server doesn't have a calendar link yet. Update it (on GitHub: your copy → Actions → Update Managemint).
 android.settings.feed_load_failed: Couldn't load your calendar link. Check your connection.
 android.settings.calendar_title: Calendar
 android.settings.calendar_help: Subscribe to your private calendar link and tasks with a date show up in Google Calendar, Apple Calendar or Outlook, in a calendar called Managemint. It only goes one way. Google Calendar can take up to a day to show changes, and its phone app can't add a link: tap Add to Google Calendar, or add it once on a computer.
@@ -1046,7 +1046,7 @@ android.api.unpaired: This phone isn't paired with the server any more. Pair it 
 android.api.server_error_text: Server error {code}: {text}
 android.api.code_rejected: That code is wrong, expired or already used. Make a new one on the setup page.
 android.api.too_many: Too many tries. Wait an hour and try again.
-android.api.no_pairing: That server doesn't support pairing yet. Update it (Sync fork on GitHub).
+android.api.no_pairing: That server doesn't support pairing yet. Update it (on GitHub: your copy → Actions → Update Managemint).
 android.api.server_error: Server error {code}
 android.api.unreachable: Can't reach {server}
 

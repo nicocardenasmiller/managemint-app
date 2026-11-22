@@ -137,8 +137,15 @@ export default {
     const path = url.pathname.replace(/\/+$/, "") || "/";
     if (path === "/health") return json({ ok: true });
     if (url.pathname === "/app" || url.pathname.startsWith("/app/")) return serveApp(req, env, url.pathname);
-    // Public pages Google requires before an OAuth app can be set to "In production".
-    if (path === "/" || path === "/privacy") return new Response(PUBLIC_PAGE, { headers: { "content-type": "text/html; charset=utf-8" } });
+    // The bare address opens the app (it links to /setup when not signed in).
+    if (path === "/") return Response.redirect(new URL("/app/", req.url).toString(), 302);
+    // Privacy page (Google asks for one before an OAuth app goes "In production"): copies deployed from the public
+    // repo point to the website's privacy page; a server without PUBLIC_REPO keeps the short built-in page.
+    if (path === "/privacy") {
+      const [owner, name] = (env.PUBLIC_REPO ?? "").split("/");
+      if (owner && name) return Response.redirect(`https://${owner.toLowerCase()}.github.io/${name}/privacy.html`, 302);
+      return new Response(PUBLIC_PAGE, { headers: { "content-type": "text/html; charset=utf-8" } });
+    }
 
     // ---- setup and pairing (no token yet) ----
     const page = (body: string, type: string) => new Response(body, { headers: { "content-type": `${type}; charset=utf-8`, ...PAGE_HEADERS } });
