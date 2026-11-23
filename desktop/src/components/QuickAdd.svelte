@@ -88,6 +88,7 @@
             </div>
             <div class="r2">
               <select class="input" bind:value={d.project_id} aria-label={tr("quickadd.project_label")}>
+                {#if d.new_project}<option value="new">{tr("quickadd.new_project", { name: d.new_project })}</option>{/if}
                 {#each projectList() as pp}<option value={pp.id}>{pp.name}</option>{/each}
               </select>
               <label>{tr("quickadd.due")} <input class="input" type="date" value={d.due_date ?? ""} onchange={(e) => setDate(d, "due_date", e.currentTarget.value)} /></label>

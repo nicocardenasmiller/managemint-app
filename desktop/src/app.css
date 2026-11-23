@@ -1,5 +1,5 @@
 /* App-wide styles on top of design/tokens.css (the single source of colours). */
-:root { --font-ui: "Inter Variable", "Inter", system-ui, sans-serif; --font-title: "Newsreader Variable", "Newsreader", Georgia, serif; color-scheme: light; }
+:root { --font-ui: "Inter Variable", "Inter", system-ui, sans-serif; --font-title: var(--font-ui); color-scheme: light; }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) { color-scheme: dark; --i-clay:var(--text); --i-ochre:var(--text); --i-olive:var(--text); --i-sage:var(--text); --i-teal:var(--text); --i-slate:var(--text); --i-iris:var(--text); --i-plum:var(--text); }
 }
@@ -25,7 +25,7 @@ h1, h2, h3 { margin: 0; font-weight: 600; }
 .input:focus { outline: 2px solid var(--focus); outline-offset: -1px; border-color: transparent; }
 .label { font: 500 12px/16px var(--font-ui); letter-spacing: .01em; color: var(--text-3); }
 .meta { font-size: 13px; line-height: 18px; color: var(--text-2); }
-.page-title { font: 500 26px/32px var(--font-title); letter-spacing: -.01em; }
+.page-title { font: 600 20px/28px var(--font-title); letter-spacing: -.015em; }
 .kbd { font: 500 11px/16px var(--font-ui); border: 1px solid var(--border-strong); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; color: var(--text-2); background: var(--surface); }
 .code { font: 600 10px/14px var(--font-ui); letter-spacing: .03em; padding: 1px 4px; border-radius: 3px; background: var(--h-tint); color: var(--h-ink); white-space: nowrap; }
 .danger { color: var(--danger); }

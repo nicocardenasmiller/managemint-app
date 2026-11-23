@@ -1,13 +1,14 @@
 import { tr } from "./wording";
 import { api, ApiError, getToken } from "./api";
-import { nowLocal, setTimeZone, TZ } from "./dates";
+import { addDays, nowLocal, setTimeZone, today, TZ } from "./dates";
+import { habitStats, parsePauses, type HabitStats } from "./habits";
 import { ui } from "./ui.svelte";
-import type { Dep, DraftTask, Project, Section, Task, TaskPatch } from "./types";
+import type { Daily, DailyCheck, DailyPatch, Dep, DraftTask, Project, Section, Task, TaskPatch } from "./types";
 import type { Template, TemplateBody } from "./templates";
 
 type SyncState = "ok" | "syncing" | "offline" | "error";
 interface Toast { id: number; text: string; action?: { label: string; run: () => void } }
-interface SyncResponse { now: string; projects: Project[]; sections: Section[]; tasks: Task[]; deps?: Dep[] }
+interface SyncResponse { now: string; projects: Project[]; sections: Section[]; tasks: Task[]; deps?: Dep[]; dailies?: Daily[]; daily_checks?: DailyCheck[] }
 
 const CACHE_KEY = "managemint.cache.v1";
 const POLL_MS = 5000;
@@ -18,6 +19,9 @@ class Store {
   sections = $state<Record<string, Section>>({});
   tasks = $state<Record<string, Task>>({});
   deps = $state<Dep[]>([]);
+  dailies = $state<Record<string, Daily>>({});
+  /** Checked days, keyed "dailyId|YYYY-MM-DD". Only done days are kept. */
+  dailyChecks = $state<Record<string, true>>({});
   syncState = $state<SyncState>("ok");
   lastSync = $state<number | null>(null);
   syncError = $state<string | null>(null);
@@ -44,6 +48,7 @@ class Store {
       const c = JSON.parse(localStorage.getItem(CACHE_KEY) ?? "null");
       if (c) {
         this.projects = c.projects; this.sections = c.sections; this.tasks = c.tasks; this.deps = c.deps ?? [];
+        this.dailies = c.dailies ?? {}; this.dailyChecks = c.dailyChecks ?? {};
         this.since = c.since; this.loaded = true;
       }
     } catch { /* no cache */ }
@@ -123,6 +128,15 @@ class Store {
       this.tasks[t.id] = t;
     }
     if (r.deps) this.deps = r.deps;
+    for (const d of r.dailies ?? []) {
+      if (this.pending.has(d.id)) continue;
+      if (d.deleted_at) delete this.dailies[d.id]; else this.dailies[d.id] = d;
+    }
+    for (const c of r.daily_checks ?? []) {
+      const k = `${c.daily_id}|${c.date}`;
+      if (this.pending.has(k)) continue;
+      if (c.done) this.dailyChecks[k] = true; else delete this.dailyChecks[k];
+    }
     this.loaded = true;
     if (arrived) this.toast(arrived === 1 ? tr("store.arrived_one") : tr("store.arrived_other", { n: arrived }));
     this.saveCache();
@@ -137,6 +151,7 @@ class Store {
         localStorage.setItem(CACHE_KEY, JSON.stringify({
           since: this.since, projects: $state.snapshot(this.projects), sections: $state.snapshot(this.sections),
           tasks: $state.snapshot(this.tasks), deps: $state.snapshot(this.deps),
+          dailies: $state.snapshot(this.dailies), dailyChecks: $state.snapshot(this.dailyChecks),
         }));
       } catch { /* storage full or blocked: cache is only a speed-up */ }
     }, 1000);
@@ -144,7 +159,7 @@ class Store {
 
   clearCache() {
     try { localStorage.removeItem(CACHE_KEY); } catch { /* ignore */ }
-    this.projects = {}; this.sections = {}; this.tasks = {}; this.deps = []; this.since = "1970-01-01"; this.loaded = false;
+    this.projects = {}; this.sections = {}; this.tasks = {}; this.deps = []; this.dailies = {}; this.dailyChecks = {}; this.since = "1970-01-01"; this.loaded = false;
   }
 
   // ---------- toasts ----------
@@ -196,7 +211,14 @@ class Store {
 
   toggleDone(id: string) {
     const t = this.tasks[id];
-    if (t) return this.setStatus(id, t.status === "done" ? "todo" : "done");
+    if (!t) return;
+    const r = this.setStatus(id, t.status === "done" ? "todo" : "done");
+    // Checking off the last task due today (or overdue) clears Today: a small celebration.
+    const t0 = today();
+    const dueBy = (x: Task) => { const w = x.due_date ?? x.deadline; return w !== null && w <= t0; };
+    if (t.status !== "done" && !t.parent_id && dueBy(t)
+      && !Object.values(this.tasks).some((x) => x.id !== id && !x.parent_id && !x.deleted_at && (x.status === "todo" || x.status === "doing") && dueBy(x))) ui.celebrate();
+    return r;
   }
 
   async createTask(fields: TaskPatch & { title: string }): Promise<Task | undefined> {
@@ -254,7 +276,8 @@ class Store {
     });
   }
   async saveCapture(captureId: string, drafts: DraftTask[]) {
-    const r = await api<{ tasks: Task[]; calendar_errors: string[] }>("POST", `/capture/${captureId}/save`, { tasks: drafts });
+    const r = await api<{ tasks: Task[]; calendar_errors: string[]; projects?: Project[] }>("POST", `/capture/${captureId}/save`, { tasks: drafts });
+    for (const p of r.projects ?? []) if (p) this.projects[p.id] = p;
     for (const t of r.tasks) if (t) this.tasks[t.id] = t;
     const undo = async () => {
       await api("POST", `/capture/${captureId}/undo`);
@@ -264,6 +287,71 @@ class Store {
     this.toast(r.tasks.length === 1 ? tr("store.added_one") : tr("store.added_other", { n: r.tasks.length }), { label: tr("store.undo_all"), run: () => void undo() }, 10000);
     if (r.calendar_errors?.length) this.toast(tr("store.calendar_not_updated"));
     return r.tasks;
+  }
+
+  // ---------- dailies ----------
+  get dailyList(): Daily[] { return Object.values(this.dailies).sort((a, b) => a.sort - b.sort || a.created_at.localeCompare(b.created_at)); }
+  isChecked(id: string, date: string) { return Boolean(this.dailyChecks[`${id}|${date}`]); }
+  /** Streaks, today's state and history for one daily (rules in lib/habits.ts). */
+  dailyStats(d: Daily, day = today()): HabitStats {
+    const checked = new Set<string>();
+    const prefix = `${d.id}|`;
+    for (const k in this.dailyChecks) if (k.startsWith(prefix)) checked.add(k.slice(prefix.length));
+    return habitStats({ days: d.days ?? "1111111", per_week: d.per_week ?? null, pauses: parsePauses(d.pauses), created: today(new Date(d.created_at)) }, checked, day);
+  }
+  async createDaily(title: string, sched: DailyPatch = {}) {
+    const id = crypto.randomUUID();
+    const sort = Math.max(0, ...Object.values(this.dailies).map((d) => d.sort + 1));
+    const now = new Date().toISOString();
+    this.dailies[id] = { id, title, sort, created_at: now, updated_at: now, deleted_at: null, days: sched.days ?? "1111111", per_week: sched.per_week ?? null, pauses: "[]" };
+    await this.guard([id], async () => { this.dailies[id] = await api<Daily>("POST", "/dailies", { id, title, sort, ...sched }); },
+      () => { delete this.dailies[id]; }, () => void this.createDaily(title, sched));
+  }
+  async updateDaily(id: string, patch: DailyPatch) {
+    const old = this.dailies[id] && ($state.snapshot(this.dailies[id]) as Daily);
+    if (!old) return;
+    const { pauses, ...rest } = patch;
+    this.dailies[id] = { ...old, ...rest, ...(pauses ? { pauses: JSON.stringify(pauses) } : {}) };
+    await this.guard([id], async () => { this.dailies[id] = await api<Daily>("PATCH", `/dailies/${id}`, patch); },
+      () => { this.dailies[id] = old; }, () => void this.updateDaily(id, patch));
+  }
+  renameDaily(id: string, title: string) { if (this.dailies[id]?.title !== title) return this.updateDaily(id, { title }); }
+  /** Pause keeps the history; paused days never count against a streak. */
+  setDailyPaused(id: string, paused: boolean) {
+    const d = this.dailies[id]; if (!d) return;
+    const list = parsePauses(d.pauses);
+    const t = today();
+    if (paused && !list.some(([, to]) => to === null)) list.push([t, null]);
+    if (!paused) for (const p of list) if (p[1] === null) p[1] = addDays(t, -1) < p[0] ? p[0] : addDays(t, -1);
+    // A pause that starts and ends before it covered a full day (paused and resumed today) is dropped.
+    return this.updateDaily(id, { pauses: list.filter(([from, to]) => !(to !== null && from === t)) });
+  }
+  /** Swap with the neighbour above (-1) or below (+1) and renumber everything so sorts stay distinct. */
+  async moveDaily(id: string, dir: -1 | 1) {
+    const list = this.dailyList;
+    const i = list.findIndex((d) => d.id === id), j = i + dir;
+    if (i < 0 || j < 0 || j >= list.length) return;
+    [list[i], list[j]] = [list[j], list[i]];
+    await Promise.all(list.map((d, n) => (d.sort !== n + 1 ? this.updateDaily(d.id, { sort: n + 1 }) : undefined)));
+  }
+  async deleteDaily(id: string) {
+    const old = this.dailies[id] && ($state.snapshot(this.dailies[id]) as Daily);
+    if (!old) return;
+    delete this.dailies[id];
+    await this.guard([id], () => api("DELETE", `/dailies/${id}`), () => { this.dailies[id] = old; }, () => void this.deleteDaily(id));
+    const restore = async () => {
+      this.dailies[id] = old;
+      await this.guard([id], async () => { this.dailies[id] = await api<Daily>("POST", `/dailies/${id}/restore`); },
+        () => { delete this.dailies[id]; }, () => void restore());
+    };
+    this.toast(tr("store.daily_deleted", { title: old.title }), { label: tr("store.undo"), run: () => void restore() });
+  }
+  async toggleDaily(id: string, date: string) {
+    const k = `${id}|${date}`;
+    const done = !this.dailyChecks[k];
+    const set = (v: boolean) => { if (v) this.dailyChecks[k] = true; else delete this.dailyChecks[k]; };
+    set(done);
+    await this.guard([k], () => api("PUT", `/dailies/${id}/checks/${date}`, { done }), () => set(!done), () => void this.toggleDaily(id, date));
   }
 
   // ---------- sections ----------

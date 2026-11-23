@@ -38,6 +38,13 @@ const WD = tr("dates.weekdays").split(" ");
 export const monthName = (s: string) => MONTHS[Number(s.slice(5, 7)) - 1];
 export const shortDate = (s: string) => `${monthName(s)} ${Number(s.slice(8, 10))}`;
 export const weekdayName = (s: string) => WD[weekday(s)];
+const WD_LONG = tr("dates.weekdays_long").split(" ");
+const MONTHS_LONG = tr("dates.months_long").split(" ");
+/** "Monday" */
+export const weekdayLong = (s: string) => WD_LONG[weekday(s)];
+/** "Monday, November 23" */
+export const fullDate = (s: string) =>
+  tr("dates.full", { weekday: weekdayLong(s), month: MONTHS_LONG[Number(s.slice(5, 7)) - 1], day: Number(s.slice(8, 10)) });
 
 /** "Today", "Tomorrow", "Fri", "Mar 4", "Mar 4, 2028" relative to `t`. */
 export function label(s: string, t = today()): string {

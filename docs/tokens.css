@@ -1,17 +1,17 @@
-/* Managemint design tokens (Stage D draft). Source of truth: design/tokens.md */
+/* Managemint design tokens. Source of truth: design/tokens.md (light colours from the Nov 23, 2026 theme: cool greys + muted blue, Inter only). */
 :root {
-  --bg:#F8F5F1; --surface:#FDFCF9; --surface-sunken:#F0EDE8; --surface-raised:#FFF; --hover:#EBE7E0;
-  --text:#25211B; --text-2:#57514C; --text-3:#6B6761; --border:#E1DDD7; --border-strong:#C2BDB5;
-  --accent:#2A4A88; --on-accent:#FCFAF6; --accent-tint:#DFE8F9; --focus:#3B6AC5;
-  --success:#337344; --warning:#8C5A0F; --danger:#AF302B; --info:#1B6C8C;
+  --bg:#F7F8FA; --surface:#FFFFFF; --surface-sunken:#EFF1F4; --surface-raised:#FFF; --hover:#E6E9EE;
+  --text:#111827; --text-2:#4B5563; --text-3:#6B7280; --border:#E5E7EB; --border-strong:#C9CED6;
+  --accent:#3A5BA0; --on-accent:#FFFFFF; --accent-tint:#E3E9F5; --focus:#4A6FC0; --gold:#B7791F;
+  --success:#337344; --warning:#8C5A0F; --danger:#C81E1E; --info:#1B6C8C;
   --p-clay:#AB6A54; --p-ochre:#99773A; --p-olive:#788544; --p-sage:#4E8D65;
   --p-teal:#278E8E; --p-slate:#4784AD; --p-iris:#7875B1; --p-plum:#9E6893;
   --t-clay:#FCE3DB; --t-ochre:#F4E8D4; --t-olive:#E7EDD6; --t-sage:#DBF0E1;
   --t-teal:#D4F0F0; --t-slate:#D8EDFC; --t-iris:#E7E7FD; --t-plum:#F7E2F2;
   --i-clay:#6B3725; --i-ochre:#5E4205; --i-olive:#444D14; --i-sage:#1C5434;
   --i-teal:#015353; --i-slate:#144D6E; --i-iris:#444171; --i-plum:#623659;
-  --shadow-float:0 1px 2px rgb(37 33 27/.06), 0 8px 24px rgb(37 33 27/.08);
-  --font-ui:"Inter", system-ui, sans-serif; --font-title:"Newsreader", Georgia, serif;
+  --shadow-float:0 1px 2px rgb(17 24 39/.06), 0 8px 24px rgb(17 24 39/.08);
+  --font-ui:"Inter", system-ui, sans-serif; --font-title:var(--font-ui);
   --r-sm:4px; --r-md:8px; --r-lg:12px; --r-xl:28px;
   --spring-fast:linear(0,.145,.435,.72,.929,1.047,1.092,1.089,1.065,1.037,1.014,.999,.992,.991,.993,.995,1); --dur-fast:350ms;
   --spring-default:linear(0,.096,.291,.499,.677,.811,.903,.961,.994,1.009,1.015,1.015,1.012,1.009,1.006,1.004,1); --dur-default:410ms;
@@ -19,9 +19,9 @@
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg:#161311; --surface:#1D1A17; --surface-sunken:#100E0C; --surface-raised:#25221F; --hover:#2B2825;
-    --text:#EAE7E2; --text-2:#B8B4AD; --text-3:#928F88; --border:#302D2A; --border-strong:#4B4742;
-    --accent:#89B3F1; --on-accent:#11161F; --accent-tint:#212E45; --focus:#76ACFC;
+    --bg:#111318; --surface:#171A20; --surface-sunken:#0C0E12; --surface-raised:#1E222A; --hover:#252A33;
+    --text:#E6E8EC; --text-2:#B0B6C0; --text-3:#8C93A0; --border:#272C35; --border-strong:#3D4450;
+    --accent:#8EA8DA; --on-accent:#0F1420; --accent-tint:#1F2A40; --focus:#8EB0F0; --gold:#E0B35A;
     --success:#7CC58C; --warning:#E7B369; --danger:#EF7F74; --info:#71BCDF;
     --p-clay:#D3937C; --p-ochre:#C19F66; --p-olive:#A0AC6E; --p-sage:#79B58D;
     --p-teal:#5DB5B5; --p-slate:#72ACD5; --p-iris:#9F9DD8; --p-plum:#C691BA;
@@ -31,9 +31,9 @@
   }
 }
 :root[data-theme="dark"] {
-  --bg:#161311; --surface:#1D1A17; --surface-sunken:#100E0C; --surface-raised:#25221F; --hover:#2B2825;
-  --text:#EAE7E2; --text-2:#B8B4AD; --text-3:#928F88; --border:#302D2A; --border-strong:#4B4742;
-  --accent:#89B3F1; --on-accent:#11161F; --accent-tint:#212E45; --focus:#76ACFC;
+  --bg:#111318; --surface:#171A20; --surface-sunken:#0C0E12; --surface-raised:#1E222A; --hover:#252A33;
+  --text:#E6E8EC; --text-2:#B0B6C0; --text-3:#8C93A0; --border:#272C35; --border-strong:#3D4450;
+  --accent:#8EA8DA; --on-accent:#0F1420; --accent-tint:#1F2A40; --focus:#8EB0F0; --gold:#E0B35A;
   --success:#7CC58C; --warning:#E7B369; --danger:#EF7F74; --info:#71BCDF;
   --p-clay:#D3937C; --p-ochre:#C19F66; --p-olive:#A0AC6E; --p-sage:#79B58D;
   --p-teal:#5DB5B5; --p-slate:#72ACD5; --p-iris:#9F9DD8; --p-plum:#C691BA;

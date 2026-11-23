@@ -90,6 +90,22 @@ async function projects(env: Env): Promise<ProjectRow[]> {
   return r.results;
 }
 
+const PALETTE = ["clay", "ochre", "olive", "sage", "teal", "slate", "iris", "plum"];
+
+/** A project asked for in a voice note: unique id from its name, the least-used palette colour, last in order. */
+async function createProjectFromCapture(env: Env, name: string): Promise<string> {
+  const base = slug(name);
+  let id = base;
+  for (let i = 2; await env.DB.prepare("SELECT id FROM projects WHERE id = ?").bind(id).first(); i++) id = `${base}-${i}`;
+  const rows = (await env.DB.prepare("SELECT color FROM projects WHERE deleted_at IS NULL").all<{ color: string | null }>()).results;
+  const used = (c: string) => rows.filter((r) => r.color === c).length;
+  const color = PALETTE.reduce((best, c) => (used(c) < used(best) ? c : best), PALETTE[0]);
+  const sort = ((await env.DB.prepare("SELECT MAX(sort) AS m FROM projects").first<{ m: number | null }>())?.m ?? 0) + 1;
+  await env.DB.prepare("INSERT INTO projects (id, name, color, description, keywords, sort) VALUES (?, ?, ?, '', '[]', ?)")
+    .bind(id, name, color, sort).run();
+  return id;
+}
+
 async function getTask(env: Env, id: string) {
   return env.DB.prepare("SELECT * FROM tasks WHERE id = ?").bind(id).first<CalTask & Record<string, unknown>>();
 }
@@ -113,6 +129,29 @@ async function syncCalendar(env: Env, id: string): Promise<string | null> {
 }
 
 const CLIENT_ID = /^[A-Za-z0-9-]{8,64}$/;
+const isDay = (s: unknown): s is string => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s);
+
+/** Theme accent names (design/accents.css); a daily may use one as its colour. */
+const DAILY_COLORS = ["blue", "slate", "teal", "sage", "olive", "ochre", "iris", "plum"];
+
+/** Schedule and colour fields from a dailies request body: days (Mon..Sun "1010100", at least one day) and per_week (1-6 or null). */
+export function dailySchedule(body: Record<string, unknown>): { days?: string; per_week?: number | null; color?: string | null } | { error: string } {
+  const out: { days?: string; per_week?: number | null; color?: string | null } = {};
+  if ("days" in body) {
+    if (typeof body.days !== "string" || !/^[01]{7}$/.test(body.days) || !body.days.includes("1")) return { error: "days must be 7 characters of 0/1, Mon..Sun, with at least one 1" };
+    out.days = body.days;
+  }
+  if ("per_week" in body) {
+    const n = body.per_week;
+    if (n !== null && !(Number.isInteger(n) && (n as number) >= 1 && (n as number) <= 6)) return { error: "per_week must be 1-6 or null" };
+    out.per_week = n as number | null;
+  }
+  if ("color" in body) {
+    if (body.color !== null && !(typeof body.color === "string" && DAILY_COLORS.includes(body.color))) return { error: `color must be null or one of ${DAILY_COLORS.join(", ")}` };
+    out.color = body.color as string | null;
+  }
+  return out;
+}
 
 async function insertTask(env: Env, t0: Partial<Record<(typeof TASK_FIELDS)[number], unknown>>, extra: { source: string; capture_id?: string | null; id?: string }) {
   // Clients may pick the id (the phone does, so an offline task keeps its id and a retried POST can't duplicate it).
@@ -301,13 +340,25 @@ export default {
         const ids: string[] = [];
         // Tolerate a save without a prior /capture call (e.g. offline transcript processed later).
         await env.DB.prepare("INSERT OR IGNORE INTO captures (id, transcript) VALUES (?, '')").bind(seg[1]).run();
+        // Cards for a new project (project_id "new" + new_project name) create it first; one project per name.
+        const created = new Map<string, string>();
         for (const t of (body.tasks ?? []) as DraftTask[]) {
+          if (t.project_id === "new") {
+            const name = String(t.new_project ?? "").trim().slice(0, 80);
+            const key = name.toLowerCase();
+            if (!name) t.project_id = "inbox";
+            else {
+              if (!created.has(key)) created.set(key, await createProjectFromCapture(env, name));
+              t.project_id = created.get(key)!;
+            }
+          }
           ids.push(await insertTask(env, { ...t, status: "todo" }, { source: "voice", capture_id: seg[1] }));
         }
         await env.DB.prepare("UPDATE captures SET status = 'saved', updated_at = ? WHERE id = ?").bind(nowIso(), seg[1]).run();
         const errors = (await Promise.all(ids.map((i) => syncCalendar(env, i)))).filter(Boolean);
         const saved = await Promise.all(ids.map((i) => getTask(env, i)));
-        return json({ tasks: saved, calendar_errors: errors });
+        const newProjects = await Promise.all([...created.values()].map((i) => env.DB.prepare("SELECT * FROM projects WHERE id = ?").bind(i).first()));
+        return json({ tasks: saved, calendar_errors: errors, projects: newProjects });
       }
 
       // POST /capture/:id/undo — "Undo all" after saving.
@@ -565,6 +616,63 @@ export default {
         }
       }
 
+      // Dailies: a short list of things to do every day. Clients may pick the id.
+      // POST /dailies {title, id?, sort?}, PATCH /dailies/:id {title?, sort?}, DELETE /dailies/:id (soft),
+      // PUT /dailies/:id/checks/:date {done} — check or uncheck one day (YYYY-MM-DD, the user's local day).
+      if (seg[0] === "dailies") {
+        if (req.method === "POST" && seg.length === 1) {
+          const title = String(body.title ?? "").trim();
+          if (!title) return json({ error: "title is required" }, 400);
+          const id = body.id && CLIENT_ID.test(body.id) ? body.id : crypto.randomUUID();
+          const sort = body.sort ?? ((await env.DB.prepare("SELECT MAX(sort) AS m FROM dailies").first<{ m: number | null }>())?.m ?? 0) + 1;
+          const sched = dailySchedule(body);
+          if ("error" in sched) return json(sched, 400);
+          await env.DB.prepare("INSERT OR IGNORE INTO dailies (id, title, sort, days, per_week, color) VALUES (?, ?, ?, ?, ?, ?)")
+            .bind(id, title, Number(sort), sched.days ?? "1111111", sched.per_week ?? null, sched.color ?? null).run();
+          return json(await env.DB.prepare("SELECT * FROM dailies WHERE id = ?").bind(id).first(), 201);
+        }
+        if (((req.method === "PATCH" && seg.length === 2) || (req.method === "POST" && seg[2] === "restore"))
+          && !(await env.DB.prepare("SELECT id FROM dailies WHERE id = ?").bind(seg[1]).first())) return json({ error: "unknown daily" }, 404);
+        if (req.method === "PATCH" && seg.length === 2) {
+          const sched = dailySchedule(body);
+          if ("error" in sched) return json(sched, 400);
+          const vals: Record<string, unknown> = { ...sched };
+          if ("title" in body) vals.title = String(body.title).trim();
+          if ("sort" in body) vals.sort = Number(body.sort);
+          if ("pauses" in body) {
+            const ok = Array.isArray(body.pauses) && body.pauses.every((p: unknown) =>
+              Array.isArray(p) && p.length === 2 && isDay(p[0]) && (p[1] === null || isDay(p[1])));
+            if (!ok) return json({ error: "pauses must be [[from, to|null], ...] with YYYY-MM-DD dates" }, 400);
+            vals.pauses = JSON.stringify(body.pauses);
+          }
+          const cols = Object.keys(vals);
+          if (cols.length) {
+            await env.DB.prepare(`UPDATE dailies SET ${cols.map((c) => `${c} = ?`).join(", ")}, updated_at = ? WHERE id = ?`)
+              .bind(...cols.map((k) => vals[k]), nowIso(), seg[1]).run();
+          }
+          return json(await env.DB.prepare("SELECT * FROM dailies WHERE id = ?").bind(seg[1]).first());
+        }
+        if (req.method === "DELETE" && seg.length === 2) {
+          const now = nowIso();
+          await env.DB.prepare("UPDATE dailies SET deleted_at = ?, updated_at = ? WHERE id = ?").bind(now, now, seg[1]).run();
+          return json({ deleted: seg[1] });
+        }
+        if (req.method === "POST" && seg[2] === "restore") {
+          await env.DB.prepare("UPDATE dailies SET deleted_at = NULL, updated_at = ? WHERE id = ?").bind(nowIso(), seg[1]).run();
+          return json(await env.DB.prepare("SELECT * FROM dailies WHERE id = ?").bind(seg[1]).first());
+        }
+        if (req.method === "PUT" && seg[2] === "checks" && seg[3]) {
+          if (!isDay(seg[3])) return json({ error: "date must be YYYY-MM-DD" }, 400);
+          if (!(await env.DB.prepare("SELECT id FROM dailies WHERE id = ?").bind(seg[1]).first())) return json({ error: "unknown daily" }, 404);
+          const done = body.done === false || body.done === 0 ? 0 : 1;
+          const now = nowIso();
+          await env.DB.prepare(
+            "INSERT INTO daily_checks (daily_id, date, done, updated_at) VALUES (?, ?, ?, ?) ON CONFLICT (daily_id, date) DO UPDATE SET done = excluded.done, updated_at = excluded.updated_at",
+          ).bind(seg[1], seg[3], done, now).run();
+          return json({ daily_id: seg[1], date: seg[3], done, updated_at: now });
+        }
+      }
+
       // Dependencies (finish-to-start): POST/DELETE /deps {task_id, depends_on_id}
       if (seg[0] === "deps" && seg.length === 1 && (req.method === "POST" || req.method === "DELETE")) {
         const { task_id, depends_on_id } = req.method === "POST" ? body : Object.fromEntries(url.searchParams);
@@ -600,15 +708,20 @@ export default {
         // (its updated_at is set a moment before it commits) is then picked up next time instead of being missed.
         // Rows may arrive twice; clients upsert, so that's harmless.
         const next = new Date(Date.now() - 10_000).toISOString();
-        const [p, s, t, d] = await Promise.all([
+        const [p, s, t, d, dl, dc] = await Promise.all([
           env.DB.prepare("SELECT * FROM projects WHERE updated_at > ?").bind(since).all(),
           env.DB.prepare("SELECT * FROM sections WHERE updated_at > ?").bind(since).all(),
           env.DB.prepare("SELECT * FROM tasks WHERE updated_at > ?").bind(since).all(),
           // deps has no timestamps; it is small, so send all of it when anything changed (or on a full sync).
           env.DB.prepare("SELECT task_id, depends_on_id FROM deps").all(),
+          env.DB.prepare("SELECT * FROM dailies WHERE updated_at > ?").bind(since).all(),
+          env.DB.prepare("SELECT * FROM daily_checks WHERE updated_at > ?").bind(since).all(),
         ]);
         const changed = since === "1970-01-01" || p.results.length + s.results.length + t.results.length > 0;
-        return json({ now: next, projects: p.results, sections: s.results, tasks: t.results, ...(changed ? { deps: d.results } : {}) });
+        return json({
+          now: next, projects: p.results, sections: s.results, tasks: t.results, ...(changed ? { deps: d.results } : {}),
+          dailies: dl.results, daily_checks: dc.results,
+        });
       }
 
       return json({ error: "not found" }, 404);

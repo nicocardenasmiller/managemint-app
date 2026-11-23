@@ -12,6 +12,8 @@ export interface DraftTask {
   deadline: string | null;
   date_phrase: string;
   confidence: number;
+  /** Name of a project to create on save, when the speaker asked for a new one (project_id is then "new"). */
+  new_project?: string;
 }
 
 const DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
@@ -65,8 +67,16 @@ export function postprocess(tasks: DraftTask[], todayStr: string, transcript = "
     const monday = addDays(today, (0 - weekday(today) + 7) % 7 || 7);
     const namesDay = /monday|tuesday|wednesday|thursday|friday|saturday|sunday/.test(phrase);
     if (phrase.includes("next week") && !namesDay) {
-      const target = /end of next week/.test(phrase) ? addDays(monday, 4) : monday;
-      for (const k of DATE_FIELDS) if (t[k]) t[k] = fmtDate(target);
+      const set = DATE_FIELDS.filter((k) => t[k]);
+      if (set.length === 1) {
+        const target = /end of next week/.test(phrase) ? addDays(monday, 4) : monday;
+        t[set[0]] = fmtDate(target);
+      } else if (set.length > 1) {
+        // A range ("starting next week until the 15th"): fix only the end that "next week" names.
+        if (t.start_date && /\b(start\w*|begin\w*|from) next week/.test(phrase)) t.start_date = fmtDate(monday);
+        const end = t.due_date ? "due_date" : "deadline";
+        if (t[end] && /end of next week/.test(phrase)) t[end] = fmtDate(addDays(monday, 4));
+      }
     }
 
     // 4. Weekday names -> closest upcoming weekday unless the speaker said otherwise.
@@ -81,7 +91,12 @@ export function postprocess(tasks: DraftTask[], todayStr: string, transcript = "
       t[setFields[0]] = fmtDate(addDays(today, ahead));
     }
 
-    // 5. "at 6" with no am/morning -> evening for 1-7.
+    // 5. A start after the due date means the two were swapped.
+    if (t.start_date && t.due_date && t.start_date > t.due_date) {
+      [t.start_date, t.due_date] = [t.due_date, t.start_date];
+    }
+
+    // 6. "at 6" with no am/morning -> evening for 1-7.
     if (t.due_time) {
       const [h, m] = t.due_time.split(":").map(Number);
       if (h >= 1 && h <= 7 && !/\b(am|a\.m\.|morning)\b/.test(phrase)) {

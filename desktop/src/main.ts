@@ -1,6 +1,6 @@
 import "@fontsource-variable/inter";
-import "@fontsource-variable/newsreader";
 import "../../design/tokens.css";
+import "../../design/accents.css";
 import "./app.css";
 import { mount } from "svelte";
 import App from "./App.svelte";

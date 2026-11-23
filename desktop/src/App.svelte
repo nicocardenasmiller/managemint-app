@@ -20,15 +20,19 @@
   import Guidelines from "./components/Guidelines.svelte";
   import CalendarFeed from "./components/CalendarFeed.svelte";
   import ListView from "./views/ListView.svelte";
+  import DailiesView from "./views/DailiesView.svelte";
+  import Confetti from "./components/Confetti.svelte";
   import BoardView from "./views/BoardView.svelte";
   import TimelineView from "./views/TimelineView.svelte";
   import type { Status } from "./lib/types";
   import { scopeTitle } from "./lib/query";
+  import { fullDate, today, weekdayLong } from "./lib/dates";
 
   // Phone layout (iPhone friends use the web app): lists only, tabs at the bottom, projects in a drawer.
   const PHONE = "(max-width: 700px)";
   let phone = $state(typeof matchMedia === "function" && matchMedia(PHONE).matches);
   let drawer = $state(false);
+  let showDate = $state(false);
   onMount(() => {
     const m = matchMedia(PHONE);
     const on = () => (phone = m.matches);
@@ -37,7 +41,7 @@
   });
   // Picking a project in the drawer closes it.
   $effect(() => { void ui.scope; drawer = false; });
-  const TABS = [["today", tr("scope.today")], ["upcoming", tr("scope.upcoming")], ["inbox", tr("scope.inbox")]] as const;
+  const TABS = [["today", tr("scope.today")], ["dailies", tr("scope.dailies")], ["upcoming", tr("scope.upcoming")], ["inbox", tr("scope.inbox")]] as const;
 
   let hasToken = $state(Boolean(getToken()));
   $effect(() => { void store.signIns; hasToken = !store.unauthorized && Boolean(getToken()); });
@@ -46,6 +50,7 @@
   $effect(() => {
     const r = document.documentElement;
     if (ui.theme === "system") r.removeAttribute("data-theme"); else r.setAttribute("data-theme", ui.theme);
+    if (ui.accent === "blue") r.removeAttribute("data-accent"); else r.setAttribute("data-accent", ui.accent);
   });
   // A deleted (or remotely deleted) task closes its panel.
   $effect(() => { if (ui.panel && ui.selected && !store.tasks[ui.selected]) ui.close(); });
@@ -134,13 +139,21 @@
   <div class="phone">
     <header>
       <button class="btn ghost icon" aria-label={tr("app.projects")} onclick={() => (drawer = true)}>☰</button>
-      <h1>{scopeTitle(ui.scope)}</h1>
+      {#if ui.scope === "today"}
+        <!-- Today shows just the weekday; a tap reveals the full date. -->
+        <button class="day" aria-expanded={showDate} title={tr("app.show_date")} onclick={() => (showDate = !showDate)}>
+          <h1>{showDate ? fullDate(today()) : weekdayLong(today())}</h1>
+        </button>
+      {:else}
+        <h1>{scopeTitle(ui.scope)}</h1>
+      {/if}
       <button class="sync {store.syncState}" aria-label={tr("app.sync_now")} onclick={() => store.syncNow()}></button>
     </header>
     <div class="view">
       {#if !store.loaded}
         <div class="skeleton" aria-label={tr("app.loading")}>{#each Array(6) as _, i}<div style="width:{40 + ((i * 37) % 45)}%"></div>{/each}</div>
-      {:else}<ListView />{/if}
+      {:else if ui.scope === "dailies"}<DailiesView phone />
+      {:else}<ListView phone />{/if}
     </div>
     <DetailPanel />
     <nav class="tabs" aria-label={tr("app.views")}>
@@ -167,6 +180,7 @@
         <div class="view">
           {#if !store.loaded}
             <div class="skeleton" aria-label={tr("app.loading")}>{#each Array(6) as _, i}<div style="width:{40 + ((i * 37) % 45)}%"></div>{/each}</div>
+          {:else if ui.scope === "dailies"}<DailiesView />
           {:else if ui.view === "timeline"}<TimelineView />
           {:else if ui.view === "board"}<BoardView />
           {:else}<ListView />{/if}
@@ -184,6 +198,7 @@
 {/if}
 {#if hasToken}<Onboarding /><Guidelines /><CalendarFeed />{/if}
 <Toasts />
+<Confetti />
 
 <style>
   .app { display: flex; height: 100%; background: var(--bg); }
@@ -191,15 +206,17 @@
   .content { flex: 1; min-height: 0; display: flex; }
   .view { flex: 1; min-width: 0; min-height: 0; }
   .phone { height: 100%; display: flex; flex-direction: column; background: var(--bg); }
-  .phone header { display: flex; align-items: center; gap: 8px; padding: max(8px, env(safe-area-inset-top)) 12px 8px; border-bottom: 1px solid var(--border); background: var(--surface); }
-  .phone header h1 { flex: 1; min-width: 0; margin: 0; font-size: 17px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .phone header { display: flex; align-items: center; gap: 8px; padding: max(8px, env(safe-area-inset-top)) 12px 4px; background: var(--bg); }
+  .phone header h1 { flex: 1; min-width: 0; margin: 0; font-size: 22px; line-height: 30px; font-weight: 600; letter-spacing: -.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .phone header .day { flex: 1; min-width: 0; display: flex; border: 0; background: none; padding: 0; text-align: left; }
+  .phone header .day h1 { font-size: 28px; line-height: 34px; }
   .phone .view { flex: 1; min-height: 0; overflow-y: auto; }
   .phone .sync { width: 10px; height: 10px; border-radius: 50%; border: 0; padding: 0; background: var(--success, #3f6b5a); }
   .phone .sync.offline, .phone .sync.error { background: var(--danger, #a5492f); }
   .phone .sync.syncing { opacity: .5; }
   .tabs { display: flex; border-top: 1px solid var(--border); background: var(--surface); padding-bottom: env(safe-area-inset-bottom); }
   .tabs button { flex: 1; border: 0; background: none; padding: 12px 4px; font-size: 13px; color: var(--text-2); }
-  .tabs button.on { color: var(--text); font-weight: 600; }
+  .tabs button.on { color: var(--accent); font-weight: 600; }
   .fab { position: fixed; right: 16px; bottom: calc(64px + env(safe-area-inset-bottom)); width: 52px; height: 52px; border-radius: 50%; border: 0;
          background: var(--accent); color: var(--on-accent); font-size: 28px; line-height: 1; box-shadow: var(--shadow-float); z-index: 20; }
   .scrim { position: fixed; inset: 0; background: rgb(0 0 0 / .25); z-index: 30; }

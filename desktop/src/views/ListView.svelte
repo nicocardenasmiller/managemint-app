@@ -8,6 +8,8 @@
   import TaskRow from "../components/TaskRow.svelte";
   import type { Task } from "../lib/types";
 
+  let { phone = false }: { phone?: boolean } = $props();
+
   interface Group { key: string; title: string; hue?: string; projectId?: string; sectionId?: string | null; tasks: Task[]; sub?: boolean; danger?: boolean }
 
   let byDate = $derived(ui.scope === "today" || ui.scope === "upcoming" || ui.listGroup === "date");
@@ -50,6 +52,14 @@
     return out;
   });
 
+  // Phone: tasks finished today fold into one "N done today" row at the end.
+  let doneToday = $derived(
+    phone && ui.scope === "today"
+      ? Object.values(store.tasks).filter((t) => !t.parent_id && t.status === "done" && t.completed_at && today(new Date(t.completed_at)) === today())
+      : [],
+  );
+  let showDone = $state(false);
+
   $effect(() => { ui.order = groups.flatMap((g) => g.tasks.map((t) => t.id)); });
 
   let adding = $state<string | null>(null);
@@ -72,7 +82,7 @@
   }
 </script>
 
-<div class="list">
+<div class="list" class:phone>
   {#if !groups.some((g) => g.tasks.length) && !single}
     <div class="empty">
       <p class="page-title">{ui.scope === "today" ? tr("list.empty_today") : tr("list.empty")}</p>
@@ -80,7 +90,7 @@
     </div>
   {/if}
   {#each groups as g (g.key)}
-    {#if !g.sub}
+    {#if !g.sub && !(phone && byDate)}
       <h2 class="proj" style={g.hue}><span class="bar"></span>{g.title}</h2>
     {:else if g.sectionId}
       <h3 class="sec">
@@ -90,11 +100,11 @@
         <button class="btn ghost tiny" onclick={() => { if (confirm(tr("list.delete_confirm", { name: g.title }))) store.deleteSection(g.sectionId!); }}>{tr("list.delete")}</button>
       </h3>
     {:else if g.title}
-      <h3 class="sec" class:danger={g.danger}>{g.title} <span class="n">{g.tasks.length}</span></h3>
+      <h3 class="sec" class:danger={g.danger && !phone}>{g.title} <span class="n">{g.tasks.length}</span></h3>
     {/if}
-    <div style={g.hue}>
+    <div style={g.hue} class:card={phone && g.tasks.length}>
       {#each g.tasks as t (t.id)}
-        <TaskRow task={t} showProject={byDate} />
+        <TaskRow task={t} showProject={byDate} stacked={phone} />
       {/each}
       {#if g.projectId && g.sub && !byDate}
         {#if adding === g.key}
@@ -118,6 +128,15 @@
       {/if}
     {/if}
   {/each}
+  {#if doneToday.length}
+    <div class="card done-fold">
+      <button class="fold" aria-expanded={showDone} onclick={() => (showDone = !showDone)}>
+        <svg viewBox="0 0 18 18" width="16" height="16" aria-hidden="true"><circle cx="9" cy="9" r="8" fill="var(--text-3)" /><path d="M5.5 9.2l2.3 2.3 4.7-4.9" fill="none" stroke="var(--surface)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+        <span>{tr("list.done_today", { n: doneToday.length })}</span><span class="chev">{showDone ? "⌄" : "›"}</span>
+      </button>
+      {#if showDone}{#each doneToday as t (t.id)}<TaskRow task={t} showProject stacked />{/each}{/if}
+    </div>
+  {/if}
 </div>
 
 <style>
@@ -137,5 +156,16 @@
   .addrow { padding: 2px 12px 2px 40px; }
   .addrow input { width: 100%; }
   .empty { padding: 80px 0; text-align: center; }
+  /* Phone: small grey section labels with the count on the right, each group in one white card. */
+  .phone { padding: 4px 16px 120px; }
+  .phone .sec { justify-content: space-between; font: 600 12px/16px var(--font-ui); letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); border: 0; padding: 0 4px; margin: 20px 0 8px; }
+  .phone .sec .n { font-weight: 500; letter-spacing: 0; }
+  .phone .proj { margin-top: 20px; }
+  .card { background: var(--surface); border-radius: var(--r-lg); box-shadow: 0 0 0 1px var(--border); overflow: hidden; }
+  .card > :global(.row + .row) { border-top: 1px solid var(--border); }
+  .done-fold { margin-top: 12px; }
+  .fold { display: flex; align-items: center; gap: 8px; width: 100%; border: 0; background: none; padding: 12px 16px; font-size: 14px; color: var(--text-2); text-align: left; }
+  .fold .chev { margin-left: auto; color: var(--text-3); }
+  .done-fold > :global(.row) { border-top: 1px solid var(--border); }
   .empty p { margin: 6px 0; }
 </style>

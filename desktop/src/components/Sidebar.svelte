@@ -6,8 +6,10 @@
   import { hueOf, hueVars, projectCode } from "../lib/colors";
 
   const count = (s: Scope) => tasksInScope(s).filter(isOpen).length;
+  /** Dailies still to check today. */
+  let dueDailies = $derived(store.dailyList.map((d) => store.dailyStats(d)).filter((x) => x.dueToday && !x.doneToday).length);
   let projects = $derived(projectList().filter((p) => p.id !== "inbox"));
-  const fixed: Array<[Scope, string]> = [["inbox", tr("scope.inbox")], ["today", tr("scope.today")], ["upcoming", tr("scope.upcoming")], ["all", tr("scope.all")]];
+  const fixed: Array<[Scope, string]> = [["inbox", tr("scope.inbox")], ["today", tr("scope.today")], ["dailies", tr("scope.dailies")], ["upcoming", tr("scope.upcoming")], ["all", tr("scope.all")]];
 </script>
 
 <nav aria-label={tr("sidebar.nav_label")}>
@@ -17,7 +19,7 @@
 
   <ul>
     {#each fixed as [s, name]}
-      {@const n = s === "all" ? 0 : count(s)}
+      {@const n = s === "all" ? 0 : s === "dailies" ? dueDailies : count(s)}
       <li><button class:active={ui.scope === s} onclick={() => ui.go(s)}>
         <span>{name}</span>{#if n}<span class="n" class:danger={s === "today"}>{n}</span>{/if}
       </button></li>

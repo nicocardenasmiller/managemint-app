@@ -32,6 +32,7 @@ export function tasksInScope(scope: Scope): Task[] {
     case "inbox": return all.filter((t) => t.project_id === "inbox");
     case "today": return all.filter((t) => isOpen(t) && whenOf(t) !== null && whenOf(t)! <= t0);
     case "upcoming": return all.filter((t) => isOpen(t) && whenOf(t) !== null && whenOf(t)! <= addDays(t0, 14));
+    case "dailies": return [];
     default: return all.filter((t) => t.project_id === scope.slice(2));
   }
 }
@@ -51,5 +52,6 @@ export function scopeTitle(scope: Scope): string {
   if (scope === "inbox") return tr("scope.inbox");
   if (scope === "today") return tr("scope.today");
   if (scope === "upcoming") return tr("scope.upcoming");
+  if (scope === "dailies") return tr("scope.dailies");
   return store.projects[scope.slice(2)]?.name ?? tr("scope.project");
 }

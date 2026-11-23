@@ -1,5 +1,5 @@
 // View state that isn't data: where you are, what's selected, what's open. Remembered per computer.
-export type Scope = "inbox" | "today" | "upcoming" | "all" | `p:${string}`;
+export type Scope = "inbox" | "today" | "upcoming" | "all" | "dailies" | `p:${string}`;
 export type View = "timeline" | "board" | "list";
 export type Zoom = "week" | "month" | "quarter" | "semester";
 export const ZOOM_PX: Record<Zoom, number> = { week: 48, month: 16, quarter: 6, semester: 3 };
@@ -11,13 +11,15 @@ function load(): Partial<UiState> {
   try { return JSON.parse(localStorage.getItem(KEY) ?? "{}"); } catch { return {}; }
 }
 
-interface UiState { scope: Scope; views: Record<string, View>; zoom: Zoom; theme: "system" | "light" | "dark"; sidebar: boolean; collapsed: Record<string, boolean>; hideOldDone: boolean; listGroup: "project" | "date" }
+interface UiState { accent: string; scope: Scope; views: Record<string, View>; zoom: Zoom; theme: "system" | "light" | "dark"; sidebar: boolean; collapsed: Record<string, boolean>; hideOldDone: boolean; listGroup: "project" | "date" }
 
 class Ui {
   scope = $state<Scope>("all");
   views = $state<Record<string, View>>({});
   zoom = $state<Zoom>("month");
-  theme = $state<UiState["theme"]>("system");
+  theme = $state<UiState["theme"]>("light");
+  /** Theme accent name (lib/accents.ts); "blue" is the default. */
+  accent = $state("blue");
   sidebar = $state(true);
   collapsed = $state<Record<string, boolean>>({});
   hideOldDone = $state(true);
@@ -45,6 +47,10 @@ class Ui {
   scrollTo = $state<{ date: string } | null>(null);
   /** Project id that the timeline shows alone (F = focus), others dimmed. */
   focus = $state<string | null>(null);
+  /** Bumped by celebrate(); components/Confetti.svelte plays a burst each time. */
+  celebrations = $state(0);
+  /** The daily whose sheet is open (Dailies view). */
+  daily = $state<string | null>(null);
   /** Task ids in on-screen order, set by the current view, for J / K. */
   order: string[] = [];
 
@@ -54,6 +60,7 @@ class Ui {
     if (s.views) this.views = s.views;
     if (s.zoom) this.zoom = s.zoom;
     if (s.theme) this.theme = s.theme;
+    if (s.accent) this.accent = s.accent;
     if (s.sidebar !== undefined) this.sidebar = s.sidebar;
     if (s.collapsed) this.collapsed = s.collapsed;
     if (s.hideOldDone !== undefined) this.hideOldDone = s.hideOldDone;
@@ -63,7 +70,7 @@ class Ui {
   save() {
     try {
       localStorage.setItem(KEY, JSON.stringify({
-        scope: this.scope, views: this.views, zoom: this.zoom, theme: this.theme, sidebar: this.sidebar,
+        scope: this.scope, views: this.views, zoom: this.zoom, theme: this.theme, accent: this.accent, sidebar: this.sidebar,
         collapsed: this.collapsed, hideOldDone: this.hideOldDone, listGroup: this.listGroup,
       }));
     } catch { /* ignore */ }
@@ -71,6 +78,7 @@ class Ui {
 
   /** Inbox, Today and Upcoming are lists; projects and "All" remember their last view (timeline by default). */
   get view(): View {
+    if (this.scope === "dailies") return "list";
     if (this.scope === "inbox" || this.scope === "today" || this.scope === "upcoming") return this.views[this.scope] ?? "list";
     return this.views[this.scope] ?? "timeline";
   }
@@ -79,6 +87,7 @@ class Ui {
   open(id: string) { this.selected = id; this.panel = true; }
   close() { this.panel = false; }
   go(scope: Scope) { this.scope = scope; this.save(); }
+  celebrate() { this.celebrations++; }
 }
 
 export const ui = new Ui();

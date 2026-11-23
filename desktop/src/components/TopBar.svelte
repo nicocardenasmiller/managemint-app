@@ -35,11 +35,13 @@
     </div>
   {/if}
 
+  {#if ui.scope !== "dailies"}
   <div class="tabs" role="tablist" aria-label={tr("topbar.view_tabs")}>
     {#each VIEWS as [v, name, key]}
       <button role="tab" aria-selected={ui.view === v} class:on={ui.view === v} title="{name} ({key})" onclick={() => (ui.view = v)}>{name}</button>
     {/each}
   </div>
+  {/if}
 
   <div class="right">
     {#if ui.view === "timeline"}
@@ -47,7 +49,7 @@
       <select class="input" aria-label={tr("topbar.zoom")} bind:value={ui.zoom} onchange={() => ui.save()}>
         {#each ZOOMS as z}<option value={z}>{tr({ week: "topbar.zoom_week", month: "topbar.zoom_month", quarter: "topbar.zoom_quarter", semester: "topbar.zoom_semester" }[z])}</option>{/each}
       </select>
-    {:else if ui.view === "list"}
+    {:else if ui.view === "list" && ui.scope !== "dailies"}
       <select class="input" aria-label={tr("topbar.group_by")} bind:value={ui.listGroup} onchange={() => ui.save()}>
         <option value="project">{tr("topbar.group_project")}</option><option value="date">{tr("topbar.group_date")}</option>
       </select>

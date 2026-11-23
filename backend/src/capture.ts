@@ -21,11 +21,12 @@ const TOOL = {
         items: {
           type: "object",
           additionalProperties: false,
-          required: ["title", "notes", "project_id", "kind", "start_date", "due_date", "due_time", "deadline", "date_phrase", "confidence"],
+          required: ["title", "notes", "project_id", "new_project", "kind", "start_date", "due_date", "due_time", "deadline", "date_phrase", "confidence"],
           properties: {
             title: { type: "string" },
             notes: { type: "string", description: "Extra detail or suggestions; empty string if none" },
-            project_id: { type: "string" },
+            project_id: { type: "string", description: 'An id from the project list, or "new" with new_project set' },
+            new_project: { type: "string", description: "Name of a new project the speaker explicitly asked for; empty string otherwise" },
             kind: { type: "string", enum: ["task", "milestone"] },
             start_date: { type: ["string", "null"], description: "YYYY-MM-DD" },
             due_date: { type: ["string", "null"], description: "YYYY-MM-DD" },
@@ -99,14 +100,31 @@ export async function parseTranscript(opts: {
   const tool = data.content.find((b) => b.type === "tool_use");
   const tasks = tool?.input?.tasks ?? [];
 
-  // Guard against unknown project ids and forced destinations.
-  const ids = new Set(opts.projects.map((p) => p.id));
+  resolveProjects(tasks, opts.projects, opts.forced);
+  return postprocess(tasks, opts.now.slice(0, 10), opts.transcript);
+}
+
+/**
+ * Guard against unknown project ids and forced destinations. A requested new project whose name matches an
+ * existing one goes to that project; otherwise it stays as project_id "new" with its name in new_project.
+ */
+export function resolveProjects(tasks: DraftTask[], projects: Pick<ProjectRow, "id" | "name">[], forced?: string | null): DraftTask[] {
+  const ids = new Set(projects.map((p) => p.id));
+  const byName = new Map(projects.map((p) => [norm(p.name), p.id]));
   for (const t of tasks) {
-    if (opts.forced) t.project_id = opts.forced;
-    else if (!ids.has(t.project_id)) {
+    const name = (t.new_project ?? "").trim().slice(0, 80);
+    t.new_project = "";
+    if (forced) { t.project_id = forced; continue; }
+    if (name) {
+      const existing = byName.get(norm(name));
+      if (existing) t.project_id = existing;
+      else { t.project_id = "new"; t.new_project = name; }
+    } else if (!ids.has(t.project_id)) {
       t.project_id = "inbox";
       t.confidence = Math.min(t.confidence ?? 0, 0.4);
     }
   }
-  return postprocess(tasks, opts.now.slice(0, 10), opts.transcript);
+  return tasks;
 }
+
+const norm = (s: string) => s.toLowerCase().replace(/\(.*?\)/g, "").replace(/[^a-z0-9]+/g, " ").trim();

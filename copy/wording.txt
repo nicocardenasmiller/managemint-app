@@ -354,6 +354,7 @@ desktop.scope.all: All projects
 desktop.scope.inbox: Inbox
 desktop.scope.today: Today
 desktop.scope.upcoming: Upcoming
+desktop.scope.dailies: Dailies
 desktop.scope.project: Project
 
 ## setup
@@ -415,6 +416,7 @@ desktop.palette.zoom_semester: Zoom: semester
 desktop.palette.show_old: Show old done tasks
 desktop.palette.hide_old: Hide old done tasks
 desktop.palette.theme: Theme: system / light / dark
+desktop.palette.theme_color: Theme colour: {name}
 desktop.palette.theme_system: Theme: system
 desktop.palette.theme_light: Theme: light
 desktop.palette.theme_dark: Theme: dark
@@ -434,6 +436,7 @@ desktop.quickadd.label: Quick add
 desktop.quickadd.placeholder: e.g. email Ana the survey draft friday, deadline for the IRB amendment is Dec 5
 desktop.quickadd.input_label: What do you need to do?
 desktop.quickadd.project_label: Project
+desktop.quickadd.new_project: New project: {name}
 desktop.quickadd.auto_project: Auto project
 desktop.quickadd.hint: sort it out
 desktop.quickadd.hint_plain: add as written
@@ -464,6 +467,9 @@ desktop.taskrow.late: {n}d late
 ## dates
 desktop.dates.months: Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec
 desktop.dates.weekdays: Mon Tue Wed Thu Fri Sat Sun
+desktop.dates.weekdays_long: Monday Tuesday Wednesday Thursday Friday Saturday Sunday
+desktop.dates.months_long: January February March April May June July August September October November December
+desktop.dates.full: {weekday}, {month} {day}
 desktop.dates.today: Today
 desktop.dates.tomorrow: Tomorrow
 desktop.dates.yesterday: Yesterday
@@ -485,6 +491,7 @@ desktop.store.save_failed_offline: Couldn't save (offline)
 desktop.store.retry: Retry
 desktop.store.calendar_not_updated: Saved, but Google Calendar didn't update
 desktop.store.deleted_task: Deleted "{title}"
+desktop.store.daily_deleted: Deleted daily "{title}"
 desktop.store.undo: Undo
 desktop.store.nothing_to_undo: Nothing to undo
 desktop.store.added_one: 1 task added
@@ -672,6 +679,7 @@ desktop.app.sync_now: Sync now
 desktop.app.loading: Loading
 desktop.app.views: Views
 desktop.app.add_task: Add a task
+desktop.app.show_date: Show the full date
 
 ## board
 desktop.board.col_todo: To do
@@ -686,6 +694,7 @@ desktop.list.tomorrow: Tomorrow
 desktop.list.week: Next 7 days
 desktop.list.later: Later
 desktop.list.no_date: No date
+desktop.list.done_today: {n} done today
 desktop.list.empty_today: Nothing due today.
 desktop.list.empty: Nothing here yet.
 desktop.list.empty_hint: Press
@@ -698,6 +707,60 @@ desktop.list.task_placeholder: Task title, Enter to add, Esc to stop
 desktop.list.add_task: + Add task
 desktop.list.section_placeholder: Section name (e.g. Writing)
 desktop.list.add_section: + Add section
+desktop.dailies.title: Dailies
+desktop.dailies.summary: {done} of {n} done today
+desktop.dailies.section_today: Today
+desktop.dailies.section_later: Not today
+desktop.dailies.section_paused: Paused
+desktop.dailies.add: + Add daily
+desktop.dailies.placeholder: Something to do regularly, Enter to add
+desktop.dailies.empty_hint: Dailies are small things you want to do every day or a few times a week, like reading 20 pages or a walk. Check them off here; misses on a rest day or a day off don't break your streak.
+desktop.dailies.every_day: Every day
+desktop.dailies.weekdays: Weekdays
+desktop.dailies.per_week_left: {n} times a week · {left} left
+desktop.dailies.week_done: Done for this week
+desktop.dailies.paused: Paused
+desktop.dailies.paused_since: Paused since {date}
+desktop.dailies.streak_days: {n} days in a row
+desktop.dailies.streak_weeks: {n} weeks in a row
+desktop.dailies.milestone_days: {n} days in a row: {title}
+desktop.dailies.milestone_weeks: {n} weeks in a row: {title}
+desktop.dailies.all_done: All done for {weekday}.
+desktop.dailies.stat_streak_days: days in a row
+desktop.dailies.stat_streak_weeks: weeks in a row
+desktop.dailies.stat_best: best
+desktop.dailies.stat_rate: last 12 weeks
+desktop.dailies.history: Last 12 weeks
+desktop.dailies.cell: {date}: {state}
+desktop.dailies.state_done: Done
+desktop.dailies.state_rest: Rest day
+desktop.dailies.state_off: Day off
+desktop.dailies.state_missed: Missed
+desktop.dailies.state_open: Not checked yet
+desktop.dailies.state_paused: Paused
+desktop.dailies.state_before: Before this daily
+desktop.dailies.backfill_hint: Click a past day to fill it in or clear it.
+desktop.dailies.schedule: Schedule
+desktop.dailies.mode_days: On set days
+desktop.dailies.mode_week: Times a week
+desktop.dailies.times_a_week: times a week, any days
+desktop.dailies.move_up: Move up
+desktop.dailies.move_down: Move down
+desktop.dailies.pause: Pause
+desktop.dailies.resume: Resume
+desktop.dailies.rename: Rename
+desktop.dailies.delete: Delete
+desktop.dailies.close: Done
+desktop.dailies.color: Colour
+desktop.dailies.color_theme: Theme colour
+desktop.accents.blue: Blue
+desktop.accents.slate: Slate
+desktop.accents.teal: Teal
+desktop.accents.sage: Sage
+desktop.accents.olive: Olive
+desktop.accents.ochre: Ochre
+desktop.accents.iris: Iris
+desktop.accents.plum: Plum
 
 ## timeline
 desktop.timeline.no_section: No section
@@ -743,6 +806,7 @@ desktop.calendarfeed.close: Close
 
 ## main
 android.main.tab_today: Today
+android.main.tab_dailies: Dailies
 android.main.tab_upcoming: Upcoming
 android.main.tab_projects: Projects
 android.main.done_snack: Done · {title}
@@ -805,6 +869,12 @@ android.settings.connected: Connected and synced.
 android.settings.unreachable_error: Can't reach the server: {error}
 android.settings.save_test: Save and test
 android.settings.last_synced: Last synced {time}
+android.settings.appearance: Appearance
+android.settings.theme: Theme
+android.settings.theme_light: Light
+android.settings.theme_dark: Dark
+android.settings.theme_system: Same as the phone
+android.settings.theme_color: Theme colour: {name}
 android.settings.reminders: Reminders
 android.settings.notifications: Notifications
 android.settings.on: On
@@ -932,15 +1002,65 @@ android.projects.delete_project: Delete project
 ## lists
 android.lists.offline_one: {n} voice capture saved offline. They'll be sorted into tasks when you're back online.
 android.lists.offline_other: {n} voice captures saved offline. They'll be sorted into tasks when you're back online.
-android.lists.overdue: Overdue ({n})
+android.lists.overdue: Overdue
 android.lists.collapse: Collapse
 android.lists.expand: Expand
 android.lists.today: Today
-android.lists.done_today: Done today ({n})
+android.lists.done_today: {n} done today
 android.lists.nothing_today: Nothing planned today
 android.lists.next_deadline: ⚑ {title} in {n} days
 android.lists.nothing_upcoming: Nothing in the next 60 days
-android.lists.no_date: No date ({n})
+android.lists.no_date: No date
+android.dailies.summary: {done} of {n} done today
+android.dailies.count: {done}/{n}
+android.dailies.section_today: Today
+android.dailies.section_later: Not today
+android.dailies.section_paused: Paused
+android.dailies.add: Add daily
+android.dailies.placeholder: Something to do regularly
+android.dailies.empty_hint: Dailies are small things you want to do every day or a few times a week, like reading 20 pages or a walk. Check them off here; a rest day or a day off doesn't break your streak.
+android.dailies.every_day: Every day
+android.dailies.weekdays: Weekdays
+android.dailies.per_week_left: {n} times a week · {left} left
+android.dailies.week_done: Done for this week
+android.dailies.paused: Paused
+android.dailies.paused_since: Paused since {date}
+android.dailies.streak_days: {n} days in a row
+android.dailies.streak_weeks: {n} weeks in a row
+android.dailies.milestone_days: {n} days in a row: {title}
+android.dailies.milestone_weeks: {n} weeks in a row: {title}
+android.dailies.all_done: All done for {weekday}.
+android.dailies.stat_streak_days: days in a row
+android.dailies.stat_streak_weeks: weeks in a row
+android.dailies.stat_best: best
+android.dailies.stat_rate: last 12 weeks
+android.dailies.backfill_hint: Tap a past day to fill it in or clear it.
+android.dailies.mode_days: On set days
+android.dailies.mode_week: Times a week
+android.dailies.times_a_week: times a week, any days
+android.dailies.move_up: Move up
+android.dailies.move_down: Move down
+android.dailies.pause: Pause
+android.dailies.resume: Resume
+android.dailies.rename: Rename
+android.dailies.delete: Delete
+android.dailies.deleted: Deleted daily {title}
+android.dailies.save: Save
+android.dailies.cancel: Cancel
+android.dailies.schedule: Schedule
+android.dailies.more: More
+android.dailies.color: Colour
+android.dailies.color_theme: Theme colour
+
+## accents
+android.accents.blue: Blue
+android.accents.slate: Slate
+android.accents.teal: Teal
+android.accents.sage: Sage
+android.accents.olive: Olive
+android.accents.ochre: Ochre
+android.accents.iris: Iris
+android.accents.plum: Plum
 
 ## components
 android.components.mark_not_done: Mark {title} not done
@@ -964,6 +1084,11 @@ android.components.calendar_on: on
 android.components.milestone: Milestone
 android.components.task: Task
 android.components.due_date: Due date
+android.components.new_project: New project: {name}
+android.components.show_date: Show the full date
+android.components.start: Start
+android.components.start_on: From {date}
+android.components.start_date: Start date
 android.components.clear: Clear {what}
 android.components.ok: OK
 android.components.cancel: Cancel
@@ -1033,6 +1158,9 @@ android.onboarding.remove_task: Remove {title}
 ## dates
 android.dates.weekdays: Mon Tue Wed Thu Fri Sat Sun
 android.dates.months: Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec
+android.dates.weekdays_long: Monday Tuesday Wednesday Thursday Friday Saturday Sunday
+android.dates.months_long: January February March April May June July August September October November December
+android.dates.full: {weekday}, {month} {day}
 android.dates.today: Today
 android.dates.tomorrow: Tomorrow
 android.dates.yesterday: Yesterday

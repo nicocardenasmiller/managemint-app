@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { ACCENTS, ACCENT_LABEL } from "../lib/accents";
   import { tr } from "../lib/wording";
   import { store } from "../lib/store.svelte";
   import { ui, ZOOMS, type Scope } from "../lib/ui.svelte";
@@ -30,6 +31,8 @@
     ...ZOOMS.map((z) => ({ id: `c-z-${z}`, kind: "Command" as const, text: tr({ week: "palette.zoom_week", month: "palette.zoom_month", quarter: "palette.zoom_quarter", semester: "palette.zoom_semester" }[z]), run: () => { ui.zoom = z; ui.view = "timeline"; ui.save(); } })),
     { id: "c-old", kind: "Command", text: ui.hideOldDone ? tr("palette.show_old") : tr("palette.hide_old"), meta: "H", run: () => { ui.hideOldDone = !ui.hideOldDone; ui.save(); } },
     { id: "c-theme", kind: "Command", text: tr("palette.theme"), run: () => { ui.theme = ui.theme === "system" ? "light" : ui.theme === "light" ? "dark" : "system"; ui.save(); store.toast(tr({ system: "palette.theme_system", light: "palette.theme_light", dark: "palette.theme_dark" }[ui.theme]), undefined, 2000); } },
+    ...ACCENTS.map((a) => ({ id: `c-accent-${a}`, kind: "Command" as const, text: tr("palette.theme_color", { name: tr(ACCENT_LABEL[a]) }), meta: ui.accent === a ? "✓" : undefined,
+      run: () => { ui.accent = a; ui.save(); } })),
     { id: "c-sync", kind: "Command", text: tr("palette.sync_now"), run: () => store.syncNow() },
     { id: "c-help", kind: "Command", text: tr("palette.shortcuts"), meta: "?", run: () => (ui.help = true) },
     { id: "c-out", kind: "Command", text: tr("palette.sign_out"), run: () => { if (confirm(tr("palette.sign_out_confirm"))) { localStorage.clear(); location.reload(); } } },
