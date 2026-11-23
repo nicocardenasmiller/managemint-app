@@ -1,0 +1,13 @@
+/* Theme accent colours (Nov 23, 2026). Picked in the web app with ⌘K → Theme colour, on Android in Settings →
+   Appearance. Same list as android ui/theme/Theme.kt ACCENTS and desktop/src/lib/accents.ts. Blue is the default.
+   Each daily can also use one of these (dailies.color); --acc-<name> follows light/dark. Loaded after tokens.css. */
+:root { --acc-blue:#3A5BA0; --acc-blue-tint:#E3E9F5; --acc-slate:#475569; --acc-slate-tint:#E5E9EF; --acc-teal:#23716F; --acc-teal-tint:#DCEFEE; --acc-sage:#3D7350; --acc-sage-tint:#E0EFE4; --acc-olive:#66702F; --acc-olive-tint:#EDEFDB; --acc-ochre:#8A6420; --acc-ochre-tint:#F3EAD8; --acc-iris:#5B58A0; --acc-iris-tint:#E8E7F8; --acc-plum:#84507A; --acc-plum-tint:#F3E4EF; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --acc-blue:#8EA8DA; --acc-blue-tint:#1F2A40; --acc-slate:#A3B0C2; --acc-slate-tint:#232A35; --acc-teal:#6FC0BC; --acc-teal-tint:#12302F; --acc-sage:#86C29A; --acc-sage-tint:#1A3022; --acc-olive:#B4BE7A; --acc-olive-tint:#2B2F17; --acc-ochre:#D2AA62; --acc-ochre-tint:#362A14; --acc-iris:#A9A6E0; --acc-iris-tint:#29283F; --acc-plum:#CC9AC1; --acc-plum-tint:#36232F; } }
+:root[data-theme="dark"] { --acc-blue:#8EA8DA; --acc-blue-tint:#1F2A40; --acc-slate:#A3B0C2; --acc-slate-tint:#232A35; --acc-teal:#6FC0BC; --acc-teal-tint:#12302F; --acc-sage:#86C29A; --acc-sage-tint:#1A3022; --acc-olive:#B4BE7A; --acc-olive-tint:#2B2F17; --acc-ochre:#D2AA62; --acc-ochre-tint:#362A14; --acc-iris:#A9A6E0; --acc-iris-tint:#29283F; --acc-plum:#CC9AC1; --acc-plum-tint:#36232F; }
+:root[data-accent="slate"] { --accent:var(--acc-slate); --accent-tint:var(--acc-slate-tint); --focus:var(--acc-slate); }
+:root[data-accent="teal"] { --accent:var(--acc-teal); --accent-tint:var(--acc-teal-tint); --focus:var(--acc-teal); }
+:root[data-accent="sage"] { --accent:var(--acc-sage); --accent-tint:var(--acc-sage-tint); --focus:var(--acc-sage); }
+:root[data-accent="olive"] { --accent:var(--acc-olive); --accent-tint:var(--acc-olive-tint); --focus:var(--acc-olive); }
+:root[data-accent="ochre"] { --accent:var(--acc-ochre); --accent-tint:var(--acc-ochre-tint); --focus:var(--acc-ochre); }
+:root[data-accent="iris"] { --accent:var(--acc-iris); --accent-tint:var(--acc-iris-tint); --focus:var(--acc-iris); }
+:root[data-accent="plum"] { --accent:var(--acc-plum); --accent-tint:var(--acc-plum-tint); --focus:var(--acc-plum); }
