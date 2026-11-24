@@ -3,6 +3,7 @@ import { store } from "./store.svelte";
 import { addDays, diffDays, today } from "./dates";
 import type { Project, Section, Task } from "./types";
 import type { Scope } from "./ui.svelte";
+import { isOngoing } from "./today";
 
 export const projectList = (): Project[] =>
   Object.values(store.projects).filter((p) => p.status !== "done").sort((a, b) => a.sort - b.sort || a.name.localeCompare(b.name));
@@ -30,7 +31,7 @@ export function tasksInScope(scope: Scope): Task[] {
   switch (scope) {
     case "all": return all;
     case "inbox": return all.filter((t) => t.project_id === "inbox");
-    case "today": return all.filter((t) => isOpen(t) && whenOf(t) !== null && whenOf(t)! <= t0);
+    case "today": return all.filter((t) => (isOpen(t) && whenOf(t) !== null && whenOf(t)! <= t0) || isOngoing(t, t0));
     case "upcoming": return all.filter((t) => isOpen(t) && whenOf(t) !== null && whenOf(t)! <= addDays(t0, 14));
     case "dailies": return [];
     default: return all.filter((t) => t.project_id === scope.slice(2));

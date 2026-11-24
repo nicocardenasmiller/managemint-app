@@ -690,6 +690,7 @@ desktop.board.done_on: done {date}
 ## list
 desktop.list.overdue: Overdue
 desktop.list.today: Today
+desktop.list.ongoing: Ongoing
 desktop.list.tomorrow: Tomorrow
 desktop.list.week: Next 7 days
 desktop.list.later: Later
@@ -1006,6 +1007,7 @@ android.lists.overdue: Overdue
 android.lists.collapse: Collapse
 android.lists.expand: Expand
 android.lists.today: Today
+android.lists.ongoing: Ongoing
 android.lists.done_today: {n} done today
 android.lists.nothing_today: Nothing planned today
 android.lists.next_deadline: ⚑ {title} in {n} days

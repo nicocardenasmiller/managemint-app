@@ -5,6 +5,7 @@
   import { addDays, today } from "../lib/dates";
   import { byWhen, isOpen, projectList, sectionsOf, tasksInScope, visible, whenOf } from "../lib/query";
   import { hueOf, hueVars } from "../lib/colors";
+  import { byOngoing, isOngoing } from "../lib/today";
   import TaskRow from "../components/TaskRow.svelte";
   import type { Task } from "../lib/types";
 
@@ -23,6 +24,8 @@
       const b: Group[] = [
         { key: "overdue", title: tr("list.overdue"), tasks: [], danger: true },
         { key: "today", title: tr("list.today"), tasks: [] },
+        // Started but not finished (lib/today.ts): stays in Today until checked off.
+        { key: "ongoing", title: tr("list.ongoing"), tasks: [] },
         { key: "tomorrow", title: tr("list.tomorrow"), tasks: [] },
         { key: "week", title: tr("list.week"), tasks: [] },
         { key: "later", title: tr("list.later"), tasks: [] },
@@ -30,9 +33,10 @@
       ];
       for (const t of open) {
         const w = whenOf(t);
-        const g = !w ? 5 : w < t0 ? 0 : w === t0 ? 1 : w === tom ? 2 : w <= wk ? 3 : 4;
+        const g = ui.scope === "today" && isOngoing(t, t0) ? 2 : !w ? 6 : w < t0 ? 0 : w === t0 ? 1 : w === tom ? 3 : w <= wk ? 4 : 5;
         b[g].tasks.push(t);
       }
+      b[2].tasks.sort(byOngoing);
       return b.filter((g) => g.tasks.length);
     }
     const out: Group[] = [];
