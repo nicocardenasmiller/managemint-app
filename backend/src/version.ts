@@ -1,5 +1,5 @@
 /** Server version. Keep it equal to the Android versionName and bump both for each public release; tags on the public repo's Releases are `v<VERSION>`, and the server and the app both compare themselves with the latest tag. */
-export const VERSION = "0.7.1";
+export const VERSION = "0.7.3";
 
 /** Compares "1.2.3" style versions (a leading "v" is ignored). Returns -1, 0 or 1. */
 export function compareVersions(a: string, b: string): number {
