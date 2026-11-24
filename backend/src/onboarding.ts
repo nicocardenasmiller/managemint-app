@@ -11,7 +11,7 @@ export const MAX_PROJECTS = 4;
 export const MAX_TASKS = 15;
 
 export interface Answers { stage?: string; focus?: string; dates?: string; other?: string[]; semester_end?: string }
-export interface ProposedTask { title: string; section: string | null; kind: "task" | "milestone"; due_date: string | null; deadline: string | null; notes: string }
+export interface ProposedTask { title: string; section: string | null; kind: "task" | "milestone"; start_date?: string | null; due_date: string | null; deadline: string | null; notes: string }
 export interface ProposedProject { name: string; color: string; description: string; keywords: string[]; sections: string[]; tasks: ProposedTask[] }
 export type DraftProject = BulkBody & { project: { name: string; color: string; description: string; keywords: string[] } };
 
@@ -52,8 +52,8 @@ const TOOL = {
   },
 };
 
-const WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-const wd = (d: Date) => WEEKDAYS[(d.getUTCDay() + 6) % 7];
+export const WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+export const wd = (d: Date) => WEEKDAYS[(d.getUTCDay() + 6) % 7];
 
 export const MAX_NOTES = 4000;
 
@@ -71,7 +71,7 @@ export function buildPrompt(today: string, tz: string, userNotes?: string | null
     .replace("{{calendar}}", calendar).replace("{{guidelines}}", () => guidelinesText(userNotes)).replace("{{templates}}", () => templateOutlines());
 }
 
-const clean = (s: unknown, max: number) => (typeof s === "string" ? s.replace(/[\u0000-\u001f]/g, " ").trim().slice(0, max) : "");
+export const clean = (s: unknown, max: number) => (typeof s === "string" ? s.replace(/[\u0000-\u001f]/g, " ").trim().slice(0, max) : "");
 
 export function answersText(a: Answers): string {
   const lines = [
@@ -111,9 +111,13 @@ export function toDrafts(projects: unknown, today: string, newId: () => string =
       const title = clean(t?.title, 200);
       if (!title) return [];
       const due = fixDate(t.due_date, today), deadline = fixDate(t.deadline, today);
+      // A start date only makes sense before the end it leads to; milestones have none.
+      const end = due ?? deadline;
+      const start = t.kind === "milestone" ? null : fixDate(t.start_date, today);
       return [{
         id: newId(), title, notes: clean(t.notes, 1000), kind: t.kind === "milestone" ? "milestone" as const : "task" as const,
         section_id: t.section ? sid.get(clean(t.section, 60)) ?? null : null, due_date: due, deadline, sort: i,
+        ...(start && end && start < end ? { start_date: start } : {}),
       }];
     });
     if (!tasks.length) return [];

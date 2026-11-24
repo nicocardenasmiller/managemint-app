@@ -17,7 +17,7 @@
   function focusEl(el: HTMLInputElement) { el.focus(); }
 </script>
 
-{#if ui.newProject}
+{#if ui.newProject === "plain"}
   <div class="scrim" role="presentation" onclick={() => (ui.newProject = false)}></div>
   <div class="dialog" role="dialog" aria-modal="true" aria-label={tr("newproject.title")} tabindex="-1" onkeydown={(e) => { e.stopPropagation(); if (e.key === "Escape") ui.newProject = false; }}>
   <form onsubmit={create}>
@@ -33,7 +33,7 @@
     </fieldset>
     {#if name.trim()}<p class="meta">{tr("newproject.shown_as_before")} <span class="code" style={hueVars(color as any)}>{projectCode(name)}</span> {tr("newproject.shown_as_after")}</p>{/if}
     <p class="meta">{tr("newproject.tip")}</p>
-    <div class="row"><button type="button" class="btn ghost tpl" onclick={() => { ui.newProject = false; ui.templates = "use"; }}>{tr("newproject.from_template")}</button><button type="button" class="btn ghost" onclick={() => (ui.newProject = false)}>{tr("newproject.cancel")}</button><button class="btn primary" disabled={!name.trim() || busy}>{tr("newproject.create")}</button></div>
+    <div class="row"><button type="button" class="btn ghost tpl" onclick={() => (ui.newProject = "chat")}>{tr("newproject.with_assistant")}</button><button type="button" class="btn ghost" onclick={() => (ui.newProject = false)}>{tr("newproject.cancel")}</button><button class="btn primary" disabled={!name.trim() || busy}>{tr("newproject.create")}</button></div>
   </form>
   </div>
 {/if}

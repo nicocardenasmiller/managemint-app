@@ -37,8 +37,7 @@
         <span class="code">{projectCode(p.name)}</span>
       </button></li>
     {/each}
-    <li><button class="new" onclick={() => (ui.newProject = true)}>{tr("sidebar.new_project_button")}</button></li>
-    <li><button class="new" onclick={() => (ui.templates = "use")}>{tr("sidebar.templates_button")}</button></li>
+    <li><button class="new" onclick={() => (ui.newProject = "chat")}>{tr("sidebar.new_project_button")}</button></li>
   </ul>
 
   <div class="foot">

@@ -5,7 +5,7 @@
   import { addDays, today } from "../lib/dates";
   import { byWhen, isOpen, projectList, sectionsOf, tasksInScope, visible, whenOf } from "../lib/query";
   import { hueOf, hueVars } from "../lib/colors";
-  import { byOngoing, isOngoing } from "../lib/today";
+  import { isOngoing, ongoingOrder } from "../lib/today";
   import TaskRow from "../components/TaskRow.svelte";
   import type { Task } from "../lib/types";
 
@@ -36,7 +36,7 @@
         const g = ui.scope === "today" && isOngoing(t, t0) ? 2 : !w ? 6 : w < t0 ? 0 : w === t0 ? 1 : w === tom ? 3 : w <= wk ? 4 : 5;
         b[g].tasks.push(t);
       }
-      b[2].tasks.sort(byOngoing);
+      b[2].tasks.sort(ongoingOrder((id) => store.projects[id]?.sort));
       return b.filter((g) => g.tasks.length);
     }
     const out: Group[] = [];
