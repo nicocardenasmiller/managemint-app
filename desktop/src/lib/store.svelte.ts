@@ -37,6 +37,10 @@ class Store {
 
   private since = "1970-01-01";
   private pending = new Map<string, number>();
+  /** Daily checks: server time of the newest state we know per "dailyId|date", so a slow sync can't undo a newer save. */
+  private checkStamps = new Map<string, string>();
+  /** Daily checks being saved: the state the user wants now. Clicks during a save update this; the save loop sends it next. */
+  private checkWant = new Map<string, boolean>();
   private timer: ReturnType<typeof setTimeout> | null = null;
   private failures = 0;
   private held: SyncResponse[] = [];
@@ -130,11 +134,16 @@ class Store {
     if (r.deps) this.deps = r.deps;
     for (const d of r.dailies ?? []) {
       if (this.pending.has(d.id)) continue;
+      const known = this.dailies[d.id];
+      if (known && known.updated_at > d.updated_at) continue; // older copy (a sync that started before our save)
       if (d.deleted_at) delete this.dailies[d.id]; else this.dailies[d.id] = d;
     }
     for (const c of r.daily_checks ?? []) {
       const k = `${c.daily_id}|${c.date}`;
       if (this.pending.has(k)) continue;
+      const seen = this.checkStamps.get(k);
+      if (seen && seen > c.updated_at) continue; // older copy: would undo a check we just saved
+      this.checkStamps.set(k, c.updated_at);
       if (c.done) this.dailyChecks[k] = true; else delete this.dailyChecks[k];
     }
     this.loaded = true;
@@ -159,7 +168,7 @@ class Store {
 
   clearCache() {
     try { localStorage.removeItem(CACHE_KEY); } catch { /* ignore */ }
-    this.projects = {}; this.sections = {}; this.tasks = {}; this.deps = []; this.dailies = {}; this.dailyChecks = {}; this.since = "1970-01-01"; this.loaded = false;
+    this.projects = {}; this.sections = {}; this.tasks = {}; this.deps = []; this.dailies = {}; this.dailyChecks = {}; this.checkStamps.clear(); this.since = "1970-01-01"; this.loaded = false;
   }
 
   // ---------- toasts ----------
@@ -346,12 +355,29 @@ class Store {
     };
     this.toast(tr("store.daily_deleted", { title: old.title }), { label: tr("store.undo"), run: () => void restore() });
   }
-  async toggleDaily(id: string, date: string) {
+  toggleDaily(id: string, date: string) { return this.setDailyCheck(id, date, !this.dailyChecks[`${id}|${date}`]); }
+  /** Checks or unchecks one day. Saves for the same day go one at a time, so quick check/uncheck clicks reach the
+   *  server in order; clicks made while a save runs are folded into one follow-up save of the latest state. */
+  async setDailyCheck(id: string, date: string, done: boolean) {
     const k = `${id}|${date}`;
-    const done = !this.dailyChecks[k];
     const set = (v: boolean) => { if (v) this.dailyChecks[k] = true; else delete this.dailyChecks[k]; };
+    const saving = this.checkWant.has(k);
+    this.checkWant.set(k, done);
     set(done);
-    await this.guard([k], () => api("PUT", `/dailies/${id}/checks/${date}`, { done }), () => set(!done), () => void this.toggleDaily(id, date));
+    if (saving) return; // the running save picks this up
+    let saved = !done; // what the server holds as far as we know
+    await this.guard([k], async () => {
+      try {
+        while (this.checkWant.get(k) !== saved) {
+          const want = this.checkWant.get(k)!;
+          const r = await api<DailyCheck>("PUT", `/dailies/${id}/checks/${date}`, { done: want });
+          saved = want;
+          if (r?.updated_at) this.checkStamps.set(k, r.updated_at);
+        }
+      } finally {
+        this.checkWant.delete(k);
+      }
+    }, () => set(saved), () => void this.setDailyCheck(id, date, !saved));
   }
 
   // ---------- sections ----------

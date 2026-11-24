@@ -30,16 +30,29 @@
   }
   function focusEl(el: HTMLInputElement) { el.focus(); }
 
+  /** Celebrations already shown today ("all|date", "dailyId|date|n"), so unchecking and checking again doesn't repeat them. */
+  const celebrated = new Set<string>();
+  let allDoneTimer: ReturnType<typeof setTimeout> | undefined;
   function toggle(d: Daily) {
     const wasAllDone = due.length > 0 && doneCount === due.length;
     void store.toggleDaily(d.id, day);
     const s = store.dailyStats(d, day);
     const m = milestone(s);
     bigFor = m ? d.id : null;
-    if (m) store.toast(tr(s.unit === "days" ? "dailies.milestone_days" : "dailies.milestone_weeks", { n: m, title: d.title }));
+    if (m && !celebrated.has(`${d.id}|${day}|${m}`)) {
+      celebrated.add(`${d.id}|${day}|${m}`);
+      store.toast(tr(s.unit === "days" ? "dailies.milestone_days" : "dailies.milestone_weeks", { n: m, title: d.title }));
+    }
     const nowDue = store.dailyList.map((x) => store.dailyStats(x, day)).filter((x) => x.dueToday && x.state(day) !== "paused");
-    if (!wasAllDone && s.doneToday && nowDue.length && nowDue.every((x) => x.doneToday)) {
-      setTimeout(() => { ui.celebrate(); store.toast(tr("dailies.all_done", { weekday: weekdayLong(day) })); }, 300);
+    clearTimeout(allDoneTimer);
+    if (!wasAllDone && s.doneToday && nowDue.length && nowDue.every((x) => x.doneToday) && !celebrated.has(`all|${day}`)) {
+      allDoneTimer = setTimeout(() => {
+        // Only if everything is still done (not unchecked again within the delay).
+        if (due.length && due.every((r) => r.s.doneToday)) {
+          celebrated.add(`all|${day}`);
+          ui.celebrate(); store.toast(tr("dailies.all_done", { weekday: weekdayLong(day) }));
+        }
+      }, 300);
     }
   }
 

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from "svelte";
   import { ui } from "../lib/ui.svelte";
   /** A short, quiet celebration when ui.celebrate() is called (Today cleared, every daily due today done):
    *  about two dozen small dots and petals in shades of the theme colour drift down from the top third and
@@ -21,7 +22,9 @@
       petal: i % 2 === 0,
       gold: i % 9 === 0,
     }));
-    pieces = [...pieces, ...batch];
+    // untrack: reading `pieces` here would make this effect depend on what it writes, and it would rerun forever
+    // (the tab froze when the last daily was checked).
+    pieces = [...untrack(() => pieces), ...batch];
     const ids = new Set(batch.map((p) => p.id));
     setTimeout(() => (pieces = pieces.filter((p) => !ids.has(p.id))), 1900);
   });
