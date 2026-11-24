@@ -15,8 +15,8 @@
 
   const commands = (): Item[] => [
     { id: "c-add", kind: "Command", text: tr("palette.new_task"), meta: "Q", run: () => (ui.quickAdd = true) },
-    { id: "c-proj", kind: "Command", text: tr("palette.new_project"), run: () => (ui.newProject = true) },
-    { id: "c-tpl", kind: "Command", text: tr("palette.new_from_template"), run: () => (ui.templates = "use") },
+    { id: "c-proj", kind: "Command", text: tr("palette.new_project"), run: () => (ui.newProject = "chat") },
+    { id: "c-tpl", kind: "Command", text: tr("palette.templates"), run: () => (ui.templates = "use") },
     { id: "c-onboard", kind: "Command", text: tr("palette.onboarding"), run: () => (ui.onboarding = true) },
     { id: "c-guidelines", kind: "Command", text: tr("palette.guidelines"), run: () => (ui.guidelines = true) },
     ...(ui.scope.startsWith("p:") ? [

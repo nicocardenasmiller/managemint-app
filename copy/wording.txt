@@ -244,6 +244,8 @@ server.ai_status: Anthropic answered {status}.
 server.google_server_secrets: Google is set up with server secrets here; remove them with wrangler instead.
 server.daily_limit: Daily limit of {limit} AI requests reached. It resets at midnight UTC.
 server.onboarding_no_key: This server has no AI key yet (ANTHROPIC_API_KEY).
+server.template_empty: This project has no tasks to save as a template.
+server.template_anchor_default: Start
 server.inbox_delete: Inbox can't be deleted
 server.calendar_not_configured: Google Calendar is not configured (see README, Google Calendar setup)
 server.calendar_deadline: Deadline: {title}
@@ -286,7 +288,6 @@ desktop.sidebar.add_task: + Add task
 desktop.sidebar.projects_heading: Projects
 desktop.sidebar.project_right_click: Right-click to delete
 desktop.sidebar.new_project_button: + New project
-desktop.sidebar.templates_button: Templates
 desktop.sidebar.shortcuts_button: Shortcuts
 
 ## help
@@ -337,6 +338,40 @@ desktop.deleteproject.undo_hint: You can undo this right after (⌘Z or Undo).
 desktop.deleteproject.cancel: Cancel
 desktop.deleteproject.confirm: Delete project
 
+# New project chat (desktop/src/components/ProjectChat.svelte)
+desktop.projectchat.title: New project
+desktop.projectchat.opening: What's the project? Tell me what it is and the date it leads up to, if there is one.
+desktop.projectchat.from_template: Start from a template
+desktop.projectchat.start_from: Start from my template "{name}".
+desktop.projectchat.empty_project: Empty project
+desktop.projectchat.close: Close
+desktop.projectchat.placeholder: e.g. Second-year paper, due May 1
+desktop.projectchat.change_placeholder: Ask for changes, e.g. move everything a week later
+desktop.projectchat.answer: Your answer
+desktop.projectchat.answer_voice: Answer by voice
+desktop.projectchat.send: Send
+desktop.projectchat.thinking: Thinking…
+desktop.projectchat.draft_ready: Here's a draft. Change anything, or ask me to.
+desktop.projectchat.no_reply: Sorry, I didn't get that. Could you say it another way?
+desktop.projectchat.no_key: This server has no AI key yet, so the assistant can't help. Make an empty project or use a template instead.
+desktop.projectchat.failed: The assistant didn't answer: {error}
+desktop.projectchat.offline: offline
+desktop.projectchat.retry: Try again
+desktop.projectchat.template_without: Use a template without the assistant
+desktop.projectchat.draft_label: Draft project
+desktop.projectchat.project_name: Project name
+desktop.projectchat.colour: Colour
+desktop.projectchat.milestone: Milestone
+desktop.projectchat.task: Task
+desktop.projectchat.deadline: Deadline
+desktop.projectchat.due_date: Due date
+desktop.projectchat.remove_task: Remove {title}
+desktop.projectchat.legend: red date = a real deadline · ◆ milestone
+desktop.projectchat.create: Create project with {n} tasks
+desktop.projectchat.creating: Creating…
+desktop.projectchat.created: Created "{name}" with {n} tasks
+desktop.projectchat.create_failed: Couldn't create: {error}
+
 ## newproject
 desktop.newproject.title: New project
 desktop.newproject.name_placeholder: Name, e.g. Fiscal turn paper
@@ -345,7 +380,7 @@ desktop.newproject.colour: Colour
 desktop.newproject.shown_as_before: Shown as
 desktop.newproject.shown_as_after: next to its tasks.
 desktop.newproject.tip: Tip: the phone's AI routes tasks here when they mention the project's name. Add sections in the List view.
-desktop.newproject.from_template: Start from a template…
+desktop.newproject.with_assistant: Set it up with the assistant
 desktop.newproject.cancel: Cancel
 desktop.newproject.create: Create
 
@@ -392,8 +427,8 @@ desktop.guidelines.save: Save
 ## palette
 desktop.palette.new_task: New task
 desktop.palette.new_project: New project
-desktop.palette.new_from_template: New project from template
 desktop.palette.onboarding: Set up projects (guided)
+desktop.palette.templates: Templates
 desktop.palette.guidelines: Planning guidelines
 desktop.palette.save_template: Save project as template
 desktop.palette.delete_project: Delete project…
@@ -527,8 +562,8 @@ desktop.templates.no_dated: No dated tasks: dates won't be kept
 desktop.templates.anchor_help: Pick the date everything else hangs on, like the defense or a submission deadline. When you use the template you only enter that one date.
 desktop.templates.cancel: Cancel
 desktop.templates.save_button: Save template
-desktop.templates.use_title: New project from template
-desktop.templates.none_yet: No templates yet. Open a project you want to reuse (a paper, a course), then ⌘K → "Save project as template".
+desktop.templates.use_title: Templates
+desktop.templates.none_yet: No templates yet. Open a project you want to reuse (a paper, a course), then ⋯ next to its name → "Save as template".
 desktop.templates.summary: {tasks} tasks · {sections} sections · anchored on {anchor}
 desktop.templates.delete_confirm: Delete template "{name}"? Projects made from it stay.
 desktop.templates.delete: Delete
@@ -966,6 +1001,27 @@ android.capture.offline_saved: Offline. Your words are saved and will be sorted 
 android.capture.saved_for_later: Saved. It will be sorted on the next sync.
 android.capture.will_sync:  (will sync when online)
 
+# New project chat (android ui/screens/ProjectChat.kt; same flow as desktop.projectchat)
+android.projectchat.title: New project
+android.projectchat.opening: What's the project? Tell me what it is and the date it leads up to, if there is one.
+android.projectchat.from_template: Start from a template
+android.projectchat.start_from: Start from my template "{name}".
+android.projectchat.empty_project: Empty project
+android.projectchat.close: Close
+android.projectchat.placeholder: e.g. Second-year paper, due May 1
+android.projectchat.change_placeholder: Ask for changes
+android.projectchat.answer_voice: Answer by voice
+android.projectchat.send: Send
+android.projectchat.thinking: Thinking…
+android.projectchat.draft_ready: Here's a draft. Change anything, or ask me to.
+android.projectchat.no_reply: Sorry, I didn't get that. Could you say it another way?
+android.projectchat.no_key: This server has no AI key yet, so the assistant can't help. Make an empty project instead.
+android.projectchat.failed: The assistant didn't answer: {error}
+android.projectchat.retry: Try again
+android.projectchat.create: Create project with {n} tasks
+android.projectchat.creating: Creating…
+android.projectchat.create_failed: Couldn't create: {error}
+
 ## projects
 android.projects.next_ms_row: {date} {title} · {n} d
 android.projects.open_count: {n} open
@@ -985,6 +1041,9 @@ android.projects.description: What goes here (helps routing)
 android.projects.keywords: Keywords, comma separated
 android.projects.calendar: Show on Google Calendar
 android.projects.calendar_help: Off removes this project's events from the Managemint calendar
+android.projects.save_template: Save as template
+android.projects.template_saved: Saved as template "{name}". New projects can start from it.
+android.projects.template_failed: Couldn't save the template: {error}
 android.projects.delete_project_menu: Delete project…
 android.projects.save_failed: Couldn't save: {error}. Projects need a connection.
 android.projects.save: Save

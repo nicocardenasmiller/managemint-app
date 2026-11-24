@@ -8,6 +8,8 @@ import { PAGE_HEADERS, PAIR_HTML, PAIR_JS, SETUP_HTML, SETUP_JS } from "./setup-
 import qrcode from "qrcode-generator";
 import { VERSION, compareVersions, latestRelease } from "./version";
 import { MAX_NOTES, guidelinesText, proposePlan } from "./onboarding";
+import { chatTurn, cleanMessages, type ProjectInfo, type TemplateRow } from "./project-chat";
+import { defaultAnchor, fromProject, type SectionRow, type TaskRow as TplTaskRow } from "./templates";
 import { serverWording as sw } from "./wording";
 import { FEED_PATH, buildIcs, feedLinks, feedToken, feedTokenMatches, feedTasks, resetFeedToken } from "./feed";
 
@@ -317,6 +319,43 @@ export default {
           notes: await getSetting(env, "planning_guidelines"),
         });
         return json({ projects });
+      }
+
+      // POST /projects/chat {messages: [{role, text}], draft?, template_id?, now, tz?} — one turn of the new-project
+      // chat. Returns {reply, options, draft}; draft is null unless the assistant proposed or changed the project.
+      // Nothing is saved; the app sends the approved draft to POST /projects/import.
+      if (seg[0] === "projects" && seg[1] === "chat" && seg.length === 2 && req.method === "POST") {
+        const messages = cleanMessages(body.messages);
+        if (!messages.length || messages[messages.length - 1].role !== "user" || !/^\d{4}-\d{2}-\d{2}/.test(String(body.now ?? "")))
+          return json({ error: "messages (ending with the user's) and now (YYYY-MM-DDTHH:MM) are required" }, 400);
+        if (!env.ANTHROPIC_API_KEY) return json({ error: sw("onboarding_no_key") }, 400);
+        if ((await bump(env, claudeKey(), 2 * 86400)) > claudeLimit(env))
+          return json({ error: sw("daily_limit", { limit: claudeLimit(env) }) }, 429);
+        const templates = (await env.DB.prepare("SELECT id, name, body_json FROM templates ORDER BY name").all<TemplateRow>()).results;
+        const others = (await env.DB.prepare("SELECT name, color, description FROM projects WHERE deleted_at IS NULL ORDER BY sort").all<ProjectInfo>()).results;
+        return json(await chatTurn({
+          apiKey: env.ANTHROPIC_API_KEY, model: env.MODEL, messages, today: String(body.now).slice(0, 10), tz: body.tz || env.TZ,
+          notes: await getSetting(env, "planning_guidelines"), templates, templateId: typeof body.template_id === "string" ? body.template_id : null,
+          projects: others, draft: body.draft ?? null,
+        }));
+      }
+
+      // POST /projects/:id/template {name?, anchor_task_id?, today?} — save a project as a template (day offsets from
+      // the anchor task's date; default anchor: the last milestone, else the latest date).
+      if (seg[0] === "projects" && seg[2] === "template" && seg.length === 3 && req.method === "POST") {
+        const p = await env.DB.prepare("SELECT * FROM projects WHERE id = ? AND deleted_at IS NULL").bind(seg[1]).first<{ id: string; name: string }>();
+        if (!p) return json({ error: "unknown project" }, 404);
+        const sections = (await env.DB.prepare("SELECT id, name, sort FROM sections WHERE project_id = ? AND deleted_at IS NULL").bind(p.id).all<SectionRow>()).results;
+        const tasks = (await env.DB.prepare("SELECT * FROM tasks WHERE project_id = ? AND deleted_at IS NULL").bind(p.id).all<TplTaskRow>()).results;
+        if (!tasks.length) return json({ error: sw("template_empty") }, 400);
+        const deps = (await env.DB.prepare("SELECT d.task_id, d.depends_on_id FROM deps d JOIN tasks t ON t.id = d.task_id WHERE t.project_id = ?").bind(p.id).all<{ task_id: string; depends_on_id: string }>()).results;
+        const anchor = (typeof body.anchor_task_id === "string" ? tasks.find((t) => t.id === body.anchor_task_id && (t.due_date || t.deadline)) : undefined) ?? defaultAnchor(tasks);
+        const today = isDay(body.today) ? body.today : nowIso().slice(0, 10);
+        const tpl = fromProject(sections, tasks, deps, anchor, today, sw("template_anchor_default"));
+        const name = (typeof body.name === "string" && body.name.trim() ? body.name.trim() : p.name).slice(0, 120);
+        const id = crypto.randomUUID();
+        await env.DB.prepare("INSERT INTO templates (id, name, body_json, updated_at) VALUES (?, ?, ?, ?)").bind(id, name, JSON.stringify(tpl), nowIso()).run();
+        return json(await env.DB.prepare("SELECT * FROM templates WHERE id = ?").bind(id).first(), 201);
       }
 
       // GET/PUT /settings/guidelines {text} — the user's own planning notes, added to the shipped guidelines.

@@ -13,6 +13,7 @@
   import Palette from "./components/Palette.svelte";
   import Help from "./components/Help.svelte";
   import NewProject from "./components/NewProject.svelte";
+  import ProjectChat from "./components/ProjectChat.svelte";
   import Templates from "./components/Templates.svelte";
   import DeleteProject from "./components/DeleteProject.svelte";
   import Toasts from "./components/Toasts.svelte";
@@ -169,7 +170,7 @@
     {/if}
   </div>
   <QuickAdd />
-  <NewProject />
+  <NewProject /><ProjectChat />
   <Templates />
 {:else}
   <div class="app">
@@ -192,7 +193,7 @@
   <QuickAdd />
   <Palette />
   <Help />
-  <NewProject />
+  <NewProject /><ProjectChat />
   <Templates />
   <DeleteProject />
 {/if}

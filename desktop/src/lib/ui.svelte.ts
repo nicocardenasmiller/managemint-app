@@ -30,7 +30,8 @@ class Ui {
   quickAdd = $state(false);
   palette = $state(false);
   help = $state(false);
-  newProject = $state(false);
+  /** New project: "chat" with the assistant (ProjectChat.svelte) or the "plain" name-and-colour form (NewProject.svelte). */
+  newProject = $state<false | "chat" | "plain">(false);
   /** First-run welcome and guided project setup (components/Onboarding.svelte). */
   onboarding = $state(false);
   /** The user's planning notes for the assistant (components/Guidelines.svelte). */
