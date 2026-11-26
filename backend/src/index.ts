@@ -269,7 +269,7 @@ export default {
     if (path === "/mcp") {
       if (!(await authenticateConnector(req, env)))
         return new Response(JSON.stringify({ error: "unauthorized" }), { status: 401, headers: { "content-type": "application/json", "www-authenticate": challenge(origin, req.headers.has("authorization") ? "invalid_token" : undefined) } });
-      return handleMcp(req, { ...env, onTaskCreated: async (id) => syncCalendar(await withGoogleSettings(env), id) });
+      return handleMcp(req, { ...env, onTaskChanged: async (id) => syncCalendar(await withGoogleSettings(env), id) });
     }
 
     const deviceId = await authenticate(req, env, ctx);
