@@ -1,9 +1,16 @@
 // Assistant connector: a small MCP server (Streamable HTTP, JSON responses, no sessions) that an AI assistant such as
-// Claude adds as a custom connector. It can find and read tasks and edit their checklists (subtasks), nothing else:
-// no deleting, no moving, no editing top-level tasks or projects.
+// Claude adds as a custom connector. It can find and read tasks, add new tasks, and edit checklists (subtasks).
+// Nothing else: no deleting, no editing existing tasks or projects.
 //
 // Sign-in is OAuth (oauth.ts): the person approves each assistant app on this server, and can remove it on the setup page.
 import type { AccessEnv } from "./access";
+
+/** What the connector needs: the database, the user's time zone, and a hook to put a new task on the calendar. */
+export interface ConnectorEnv extends AccessEnv {
+  TZ?: string;
+  /** Called after a task with dates is created (Google Calendar sync on servers that have it). */
+  onTaskCreated?: (id: string) => Promise<unknown>;
+}
 import { VERSION } from "./version";
 
 /** Limits so a confused assistant can't flood a task. */
@@ -11,6 +18,24 @@ export const MAX_ITEMS_PER_CALL = 30;
 export const MAX_ITEMS_PER_TASK = 100;
 export const MAX_TITLE = 300;
 const MAX_RESULTS = 30;
+/** New tasks per day through the connector, so a runaway assistant can't flood the planner. */
+export const MAX_NEW_TASKS_PER_DAY = 100;
+
+/** Today's date (YYYY-MM-DD) in the user's time zone. */
+export function todayIn(tz: string | undefined, now = new Date()): string {
+  try { return new Intl.DateTimeFormat("en-CA", { timeZone: tz || "UTC", year: "numeric", month: "2-digit", day: "2-digit" }).format(now); }
+  catch { return now.toISOString().slice(0, 10); }
+}
+
+/** A real calendar date in YYYY-MM-DD form. */
+export function isDate(s: unknown): s is string {
+  if (typeof s !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+  const d = new Date(s + "T00:00:00Z");
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === s;
+}
+const isTime = (s: unknown): s is string => typeof s === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(s);
+const PRIORITY: Record<string, number> = { high: 1, medium: 2, none: 4 };
+const priorityName = (p: number) => (p === 1 ? "high" : p === 2 || p === 3 ? "medium" : "none");
 
 // ---------- MCP (JSON-RPC 2.0) ----------
 
@@ -21,7 +46,11 @@ const INSTRUCTIONS =
   "Managemint is the user's task planner. Use find_tasks to locate a task (search by words in its title), then get_task to see its " +
   "notes and current checklist before changing anything. add_checklist adds items to the end of a task's checklist; prefer short, " +
   "concrete steps (one action each, a few words to one line). Don't add items that are already on the checklist. " +
-  "If several tasks match, ask the user which one they mean instead of guessing.";
+  "If several tasks match, ask the user which one they mean instead of guessing. " +
+  "Dates are YYYY-MM-DD in the user's time zone; find_tasks returns today's date. To answer questions like \"what's due this week\" " +
+  "use find_tasks with due_from/due_to, or overdue. add_task creates a new task: use due_date for when the user plans to do it and " +
+  "deadline only when they say it's a hard deadline (\"deadline\", \"has to be done by\", \"must\"). Before adding several tasks, " +
+  "check with find_tasks that they don't already exist, and tell the user what you added.";
 
 type Json = Record<string, unknown>;
 const str = { type: "string" } as const;
@@ -29,14 +58,19 @@ const str = { type: "string" } as const;
 export const TOOLS = [
   {
     name: "find_tasks",
-    description: "Find tasks by words in their title (case-insensitive). Without a query, lists open tasks, soonest due first. " +
-      "Returns each task's id, title, project, status, dates and checklist progress. Checklist items themselves are not listed.",
+    description: "Find tasks by words in their title (case-insensitive), by date and by status. Without filters, lists open tasks, " +
+      "soonest due first. Returns today's date and each task's id, title, project, status, priority, dates and checklist progress. " +
+      "A task matches a date range if its due date or its deadline falls in it. Checklist items themselves are not listed.",
     inputSchema: {
       type: "object",
       properties: {
         query: { ...str, description: "Words from the task title, e.g. \"chapter 2 draft\"." },
         project: { ...str, description: "Only tasks in this project (its id or name)." },
         include_done: { type: "boolean", description: "Also return done tasks. Default false." },
+        status: { type: "string", enum: ["todo", "doing", "done"], description: "Only tasks with this status." },
+        due_from: { ...str, description: "Only tasks due (or with a deadline) on or after this date, YYYY-MM-DD." },
+        due_to: { ...str, description: "Only tasks due (or with a deadline) on or before this date, YYYY-MM-DD." },
+        overdue: { type: "boolean", description: "Only open tasks whose due date or deadline is before today." },
       },
       additionalProperties: false,
     },
@@ -53,6 +87,28 @@ export const TOOLS = [
     description: "Get one task with its notes, dates and checklist (each item's id, title and whether it's done).",
     inputSchema: { type: "object", properties: { task_id: { ...str, description: "The task id from find_tasks." } }, required: ["task_id"], additionalProperties: false },
     annotations: { title: "Get task", readOnlyHint: true },
+  },
+  {
+    name: "add_task",
+    description: "Create a new task. Without a project it goes to the Inbox. Returns the new task. " +
+      "It appears on the user's phone, web app and calendar like any other task.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        title: { ...str, description: "Short task title, starting with a verb where natural." },
+        project: { ...str, description: "Project id or name (see list_projects). Default: Inbox." },
+        notes: { ...str, description: "Optional notes." },
+        start_date: { ...str, description: "YYYY-MM-DD: when work starts, for tasks that span several days." },
+        due_date: { ...str, description: "YYYY-MM-DD: when the user plans to do or finish it." },
+        due_time: { ...str, description: "HH:MM, 24-hour; needs due_date." },
+        deadline: { ...str, description: "YYYY-MM-DD: hard deadline, only when the user says so." },
+        priority: { type: "string", enum: ["high", "medium", "none"], description: "Default none." },
+        checklist: { type: "array", items: str, maxItems: MAX_ITEMS_PER_CALL, description: "Optional checklist items, in order." },
+      },
+      required: ["title"],
+      additionalProperties: false,
+    },
+    annotations: { title: "Add task", readOnlyHint: false, destructiveHint: false, idempotentHint: false },
   },
   {
     name: "add_checklist",
@@ -118,11 +174,21 @@ async function projectNames(env: AccessEnv): Promise<Map<string, string>> {
 
 const likeEscape = (s: string) => s.replace(/[\\%_]/g, (c) => "\\" + c);
 
-async function findTasks(env: AccessEnv, a: Json) {
+async function findTasks(env: ConnectorEnv, a: Json) {
   const names = await projectNames(env);
+  const today = todayIn(env.TZ);
   const where = ["t.deleted_at IS NULL", "t.parent_id IS NULL", "t.status != 'cancelled'"];
   const binds: unknown[] = [];
-  if (!a.include_done) where.push("t.status != 'done'");
+  const status = typeof a.status === "string" && ["todo", "doing", "done"].includes(a.status) ? a.status : null;
+  if (a.status !== undefined && !status) throw new ToolError("status must be todo, doing or done.");
+  if (status) { where.push("t.status = ?"); binds.push(status); }
+  else if (!a.include_done) where.push("t.status != 'done'");
+  for (const k of ["due_from", "due_to"]) if (a[k] !== undefined && !isDate(a[k])) throw new ToolError(`${k} must be a date like ${today}.`);
+  if (a.due_from || a.due_to) {
+    const from = (a.due_from as string) ?? "0000-01-01", to = (a.due_to as string) ?? "9999-12-31";
+    where.push("((t.due_date BETWEEN ? AND ?) OR (t.deadline BETWEEN ? AND ?))"); binds.push(from, to, from, to);
+  }
+  if (a.overdue) { where.push("t.status IN ('todo','doing') AND (t.due_date < ? OR t.deadline < ?)"); binds.push(today, today); }
   if (typeof a.project === "string" && a.project.trim()) {
     const want = a.project.trim().toLowerCase();
     const id = [...names].find(([pid, name]) => pid.toLowerCase() === want || name.toLowerCase() === want)?.[0];
@@ -132,15 +198,15 @@ async function findTasks(env: AccessEnv, a: Json) {
   const words = typeof a.query === "string" ? a.query.toLowerCase().split(/\s+/).filter(Boolean).slice(0, 8) : [];
   for (const w of words) { where.push("LOWER(t.title) LIKE ? ESCAPE '\\'"); binds.push(`%${likeEscape(w)}%`); }
   const r = await env.DB.prepare(
-    `SELECT t.id, t.title, t.project_id, t.status, t.start_date, t.due_date, t.deadline,
+    `SELECT t.id, t.title, t.project_id, t.status, t.priority, t.start_date, t.due_date, t.due_time, t.deadline,
             (SELECT COUNT(*) FROM tasks s WHERE s.parent_id = t.id AND s.deleted_at IS NULL AND s.status != 'cancelled') AS items,
             (SELECT COUNT(*) FROM tasks s WHERE s.parent_id = t.id AND s.deleted_at IS NULL AND s.status = 'done') AS items_done
      FROM tasks t WHERE ${where.join(" AND ")}
      ORDER BY t.status = 'done', COALESCE(t.due_date, t.deadline, '9999'), t.sort LIMIT ${MAX_RESULTS + 1}`,
-  ).bind(...binds).all<Json & { project_id: string; items: number; items_done: number }>();
-  const tasks = r.results.slice(0, MAX_RESULTS).map(({ project_id, items, items_done, ...t }) =>
-    ({ ...t, project: names.get(project_id) ?? project_id, checklist: items ? `${items_done}/${items} done` : "none" }));
-  return { tasks, more: r.results.length > MAX_RESULTS };
+  ).bind(...binds).all<Json & { project_id: string; priority: number; items: number; items_done: number }>();
+  const tasks = r.results.slice(0, MAX_RESULTS).map(({ project_id, priority, items, items_done, ...t }) =>
+    ({ ...t, priority: priorityName(priority), project: names.get(project_id) ?? project_id, checklist: items ? `${items_done}/${items} done` : "none" }));
+  return { today, tasks, more: r.results.length > MAX_RESULTS };
 }
 
 async function getTask(env: AccessEnv, a: Json) {
@@ -148,10 +214,59 @@ async function getTask(env: AccessEnv, a: Json) {
   const names = await projectNames(env);
   const parent = t.parent_id ? await env.DB.prepare("SELECT id, title FROM tasks WHERE id = ?").bind(t.parent_id).first() : null;
   return {
-    id: t.id, title: t.title, project: names.get(t.project_id) ?? t.project_id, status: t.status, kind: t.kind,
+    id: t.id, title: t.title, project: names.get(t.project_id) ?? t.project_id, status: t.status, kind: t.kind, priority: priorityName(t.priority),
     start_date: t.start_date, due_date: t.due_date, due_time: t.due_time, deadline: t.deadline, notes: t.notes,
     ...(parent ? { checklist_item_of: parent } : { checklist: await checklist(env, t.id) }),
   };
+}
+
+async function projectId(env: AccessEnv, want: unknown): Promise<string> {
+  if (want === undefined || want === null || want === "") return "inbox";
+  if (typeof want !== "string") throw new ToolError("project must be a project id or name.");
+  const w = want.trim().toLowerCase();
+  const hit = [...(await projectNames(env))].find(([id, name]) => id.toLowerCase() === w || name.toLowerCase() === w);
+  if (!hit) throw new ToolError(`No project called "${want}". Use list_projects to see them, or leave project out for the Inbox.`);
+  return hit[0];
+}
+
+async function addTask(env: ConnectorEnv, a: Json) {
+  const title = cleanTitle(a.title);
+  if (!title) throw new ToolError("title is required.");
+  const pid = await projectId(env, a.project);
+  for (const k of ["start_date", "due_date", "deadline"]) if (a[k] !== undefined && a[k] !== null && !isDate(a[k])) throw new ToolError(`${k} must be a date like ${todayIn(env.TZ)}.`);
+  if (a.due_time !== undefined && a.due_time !== null && !isTime(a.due_time)) throw new ToolError("due_time must be HH:MM, 24-hour.");
+  if (a.due_time && !a.due_date) throw new ToolError("due_time needs a due_date.");
+  const end = (a.due_date ?? a.deadline) as string | undefined;
+  if (a.start_date && end && (a.start_date as string) > end) throw new ToolError("start_date is after the due date.");
+  if (a.priority !== undefined && !(typeof a.priority === "string" && a.priority in PRIORITY)) throw new ToolError("priority must be high, medium or none.");
+  const items = a.checklist === undefined ? [] : Array.isArray(a.checklist) ? a.checklist.map(cleanTitle).filter(Boolean) : null;
+  if (!items) throw new ToolError("checklist must be a list of item titles.");
+  if (items.length > MAX_ITEMS_PER_CALL) throw new ToolError(`At most ${MAX_ITEMS_PER_CALL} checklist items.`);
+  const day = new Date().toISOString().slice(0, 10);
+  const made = await env.DB.prepare("SELECT COUNT(*) AS n FROM tasks WHERE id LIKE 'ai-%' AND created_at >= ?")
+    .bind(day).first<{ n: number }>();
+  if ((made?.n ?? 0) >= MAX_NEW_TASKS_PER_DAY) throw new ToolError(`The assistant can add at most ${MAX_NEW_TASKS_PER_DAY} tasks a day.`);
+  const sort = ((await env.DB.prepare("SELECT MAX(sort) AS m FROM tasks WHERE project_id = ? AND parent_id IS NULL").bind(pid).first<{ m: number | null }>())?.m ?? 0) + 1;
+  // Tasks the assistant makes get ids starting "ai-", which the daily limit above counts.
+  const id = "ai-" + crypto.randomUUID();
+  const now = nowIso();
+  await env.DB.prepare(
+    `INSERT INTO tasks (id, project_id, title, notes, start_date, due_date, due_time, deadline, priority, sort, source, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'manual', ?, ?)`,
+  ).bind(id, pid, title, typeof a.notes === "string" ? a.notes.slice(0, 10000) : "", a.start_date ?? null, a.due_date ?? null, a.due_time ?? null,
+    a.deadline ?? null, PRIORITY[(a.priority as string) ?? "none"], sort, now, now).run();
+  if (items.length) await insertItems(env, { id, project_id: pid, section_id: null }, items, 0);
+  if ((a.due_date || a.deadline) && env.onTaskCreated) await env.onTaskCreated(id).catch(() => null);
+  return getTask(env, { task_id: id });
+}
+
+async function insertItems(env: AccessEnv, t: { id: string; project_id: string; section_id: string | null }, titles: string[], firstSort: number) {
+  let sort = firstSort;
+  const now = nowIso();
+  await env.DB.batch(titles.map((title) => env.DB.prepare(
+    `INSERT INTO tasks (id, project_id, section_id, parent_id, title, sort, calendar, source, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, 0, 'manual', ?, ?)`,
+  ).bind(crypto.randomUUID(), t.project_id, t.section_id, t.id, title, sort++, now, now)));
 }
 
 async function addChecklist(env: AccessEnv, a: Json) {
@@ -164,12 +279,7 @@ async function addChecklist(env: AccessEnv, a: Json) {
   const existing = await env.DB.prepare("SELECT COUNT(*) AS n, MAX(sort) AS m FROM tasks WHERE parent_id = ? AND deleted_at IS NULL")
     .bind(t.id).first<{ n: number; m: number | null }>();
   if ((existing?.n ?? 0) + titles.length > MAX_ITEMS_PER_TASK) throw new ToolError(`A checklist can have at most ${MAX_ITEMS_PER_TASK} items.`);
-  let sort = existing?.n ? (existing.m ?? 0) + 1 : 0;
-  const now = nowIso();
-  await env.DB.batch(titles.map((title) => env.DB.prepare(
-    `INSERT INTO tasks (id, project_id, section_id, parent_id, title, sort, calendar, source, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, 0, 'manual', ?, ?)`,
-  ).bind(crypto.randomUUID(), t.project_id, t.section_id, t.id, title, sort++, now, now)));
+  await insertItems(env, t, titles, existing?.n ? (existing.m ?? 0) + 1 : 0);
   return { task_id: t.id, title: t.title, added: titles.length, checklist: await checklist(env, t.id) };
 }
 
@@ -188,10 +298,11 @@ async function updateItem(env: AccessEnv, a: Json) {
   return { task_id: s.parent_id, checklist: await checklist(env, s.parent_id) };
 }
 
-const HANDLERS: Record<string, (env: AccessEnv, a: Json) => Promise<unknown>> = {
+const HANDLERS: Record<string, (env: ConnectorEnv, a: Json) => Promise<unknown>> = {
   find_tasks: findTasks,
   list_projects: async (env) => ({ projects: [...(await projectNames(env))].map(([id, name]) => ({ id, name })) }),
   get_task: getTask,
+  add_task: addTask,
   add_checklist: addChecklist,
   update_checklist_item: updateItem,
 };
@@ -202,7 +313,7 @@ const rpcResult = (id: RpcRequest["id"], result: unknown) => ({ jsonrpc: "2.0", 
 const rpcError = (id: RpcRequest["id"], code: number, message: string) => ({ jsonrpc: "2.0", id: id ?? null, error: { code, message } });
 
 /** One JSON-RPC message. Returns null for notifications (no id), which get no reply. */
-export async function handleRpc(env: AccessEnv, msg: RpcRequest): Promise<Json | null> {
+export async function handleRpc(env: ConnectorEnv, msg: RpcRequest): Promise<Json | null> {
   if (!msg || typeof msg !== "object" || msg.jsonrpc !== "2.0" || typeof msg.method !== "string") return rpcError(msg?.id, -32600, "Invalid request");
   const isNote = msg.id === undefined;
   const p = (msg.params ?? {}) as Json;
@@ -238,7 +349,7 @@ export async function handleRpc(env: AccessEnv, msg: RpcRequest): Promise<Json |
 const HEADERS = { "content-type": "application/json", "cache-control": "no-store", "referrer-policy": "no-referrer", "x-content-type-options": "nosniff" };
 
 /** POST /mcp after the connector token was checked. GET (server-sent events) isn't offered: every reply is plain JSON. */
-export async function handleMcp(req: Request, env: AccessEnv): Promise<Response> {
+export async function handleMcp(req: Request, env: ConnectorEnv): Promise<Response> {
   if (req.method !== "POST") return new Response(null, { status: 405, headers: { allow: "POST" } });
   // No CORS headers on purpose: a web page can't read the replies. The token in the path is the only key.
   const body = await req.json().catch(() => undefined);
