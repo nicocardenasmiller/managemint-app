@@ -1,4 +1,5 @@
 <script lang="ts">
+  import MathText from "../components/MathText.svelte";
   import { tr } from "../lib/wording";
   import { tick, untrack } from "svelte";
   import { store } from "../lib/store.svelte";
@@ -339,7 +340,7 @@
                 {#if late(t)}<span class="late" title={tr("timeline.overdue")}></span>{/if}
                 <span class="h l" onpointerdown={(e) => down(e, it.task, "start")} role="presentation"></span>
                 <span class="h r" onpointerdown={(e) => down(e, it.task, "end")} role="presentation"></span>
-                {#if g.labelInside}<span class="in">{t.status === "done" ? "✓ " : ""}{t.title}</span>{/if}
+                {#if g.labelInside}<span class="in">{t.status === "done" ? "✓ " : ""}<MathText text={t.title} /></span>{/if}
               </div>
             {:else if g.shape === "dot"}
               <div class="dotm" class:late={late(t)} style="left:{g.x0}px" onpointerdown={(e) => down(e, it.task, "move")} title="{t.title}\n{tr('timeline.due', { date: t.due_date ?? t.start_date ?? '' })}" role="button" tabindex="-1" aria-label={t.title}></div>
@@ -352,7 +353,7 @@
               <div class="flag" class:hot={t.deadline && t.status !== "done" && diffDays(t.deadline, t0) <= 7} style="left:{fx - 5}px"
                 onpointerdown={(e) => down(e, it.task, g.shape === "flag" ? "move" : "deadline")} title={tr("timeline.deadline_title", { date: t.deadline ?? "", title: t.title })} role="button" tabindex="-1" aria-label={tr("timeline.deadline", { title: t.title })}>⚑</div>
             {/if}
-            {#if !g.labelInside}<span class="out" style="left:{g.labelX}px">{t.status === "done" ? "✓ " : ""}{t.title}</span>{/if}
+            {#if !g.labelInside}<span class="out" style="left:{g.labelX}px">{t.status === "done" ? "✓ " : ""}<MathText text={t.title} /></span>{/if}
           </div>
         {/each}
       {/each}

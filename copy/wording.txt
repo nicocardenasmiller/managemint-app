@@ -650,6 +650,7 @@ desktop.detail.subtasks: Subtasks
 desktop.detail.add_subtask: + Add subtask
 desktop.detail.notes: Notes
 desktop.detail.notes_placeholder: Notes
+desktop.detail.math_edit: Click to edit
 desktop.detail.created: Created {source} {date}
 desktop.detail.created_voice: from phone (voice)
 desktop.detail.created_template: from template

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import MathText from "./MathText.svelte";
   import { tr } from "../lib/wording";
   import { store } from "../lib/store.svelte";
   import { ui } from "../lib/ui.svelte";
@@ -38,7 +39,7 @@
     <span class="title">
       {#if task.kind === "milestone"}<span class="diamond" aria-label={tr("taskrow.milestone")}>◆</span>{/if}
       {#if priorityMark(task.priority)}<b class="prio" title={tr("taskrow.priority")}>{priorityMark(task.priority)}</b>{/if}
-      {task.title}
+      <MathText text={task.title} />
     </span>
     <span class="line">
       {#if showProject && project}<span class="pc" title={project.name}>{projectCode(project.name)}</span>{/if}
@@ -62,7 +63,7 @@
   {:else}
     <span class="title">
       {#if priorityMark(task.priority)}<b class="prio" title={tr("taskrow.priority")}>{priorityMark(task.priority)}</b>{/if}
-      {task.title}
+      <MathText text={task.title} />
     </span>
   {/if}
   {#if subs.length}<span class="meta subs" title={tr("taskrow.subtasks")}>{subs.filter((s) => s.status === "done").length}/{subs.length}</span>{/if}

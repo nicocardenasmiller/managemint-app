@@ -1,4 +1,5 @@
 <script lang="ts">
+  import MathText from "./MathText.svelte";
   import { tr } from "../lib/wording";
   import { store } from "../lib/store.svelte";
   import { ui } from "../lib/ui.svelte";
@@ -6,6 +7,7 @@
   import { deadlineState, isDate, label, today } from "../lib/dates";
   import { projectList, sectionsOf, subtasksOf } from "../lib/query";
   import CheckRing from "./CheckRing.svelte";
+  import { hasMath } from "../lib/math";
   import type { Status, Task, TaskPatch } from "../lib/types";
 
   let task = $derived(ui.selected ? store.tasks[ui.selected] : undefined);
@@ -17,13 +19,17 @@
   let title = $state("");
   let notes = $state("");
   let shownId = $state<string | null>(null);
+  // Text with math shows rendered until clicked; then the raw text is edited, and it renders again on blur.
+  let editTitle = $state(false);
+  let editNotes = $state(false);
+  const focusIf = (el: HTMLElement, on: boolean) => { if (on) el.focus(); };
   $effect(() => {
     if (task && task.id !== shownId) {
       // Switching tasks: save unsaved notes of the previous one first.
       const prev = shownId ? store.tasks[shownId] : undefined;
       clearTimeout(notesTimer);
       if (prev && notes !== prev.notes) store.patchTask(prev.id, { notes });
-      shownId = task.id; title = task.title; notes = task.notes;
+      shownId = task.id; title = task.title; notes = task.notes; editTitle = editNotes = false;
     }
   });
 
@@ -75,8 +81,13 @@
   <aside class="detail-panel" aria-label={tr("detail.label")} style={hueVars(hue)}>
     <div class="top">
       <CheckRing status={task.status} title={task.title} onToggle={() => store.toggleDone(task.id)} />
-      <textarea class="title" rows="1" bind:value={title} onblur={saveTitle} aria-label={tr("detail.title_label")}
+      {#if hasMath(title) && !editTitle}
+        <div class="title shown" role="textbox" tabindex="0" aria-label={tr("detail.title_label")} title={tr("detail.math_edit")}
+          onclick={() => (editTitle = true)} onkeydown={() => (editTitle = true)} onfocus={() => (editTitle = true)}><MathText text={title} /></div>
+      {:else}
+      <textarea class="title" rows="1" bind:value={title} use:focusIf={editTitle} onblur={() => { saveTitle(); editTitle = false; }} aria-label={tr("detail.title_label")}
         onkeydown={(e) => { if (e.key === "Enter") { e.preventDefault(); (e.target as HTMLElement).blur(); } else stop(e); }}></textarea>
+      {/if}
       <button class="btn ghost x" aria-label={tr("detail.close")} title={tr("detail.close")} onclick={() => ui.close()}>×</button>
     </div>
     {#if task.parent_id && store.tasks[task.parent_id]}
@@ -151,7 +162,7 @@
     <section>
       <h3 class="label">{tr("detail.blocked_by")}</h3>
       {#each blockedBy as b (b.id)}
-        <div class="chip"><button class="link" onclick={() => ui.open(b.id)}>{b.title}</button>{#if b.due_date}<span class="meta">{label(b.due_date, t0)}</span>{/if}
+        <div class="chip"><button class="link" onclick={() => ui.open(b.id)}><MathText text={b.title} /></button>{#if b.due_date}<span class="meta">{label(b.due_date, t0)}</span>{/if}
           <button class="rm" aria-label={tr("detail.remove_dep")} onclick={() => store.removeDep(task.id, b.id)}>×</button></div>
       {/each}
       <div class="depadd">
@@ -159,14 +170,14 @@
         {#if depMatches.length}
           <ul class="menu">
             {#each depMatches as m (m.id)}
-              <li><button onclick={() => { store.addDep(task.id, m.id); depQuery = ""; }}>{m.title} <span class="meta">{store.projects[m.project_id]?.name ?? ""}</span></button></li>
+              <li><button onclick={() => { store.addDep(task.id, m.id); depQuery = ""; }}><MathText text={m.title} /> <span class="meta">{store.projects[m.project_id]?.name ?? ""}</span></button></li>
             {/each}
           </ul>
         {/if}
       </div>
       {#if blocks.length}
         <h3 class="label">{tr("detail.blocks")}</h3>
-        {#each blocks as b (b.id)}<div class="chip"><button class="link" onclick={() => ui.open(b.id)}>{b.title}</button></div>{/each}
+        {#each blocks as b (b.id)}<div class="chip"><button class="link" onclick={() => ui.open(b.id)}><MathText text={b.title} /></button></div>{/each}
       {/if}
     </section>
 
@@ -176,7 +187,7 @@
         {#each subs as s (s.id)}
           <div class="sub">
             <CheckRing status={s.status} title={s.title} onToggle={() => store.toggleDone(s.id)} />
-            <button class="link" class:faded={s.status === "done"} onclick={() => ui.open(s.id)}>{s.title}</button>
+            <button class="link" class:faded={s.status === "done"} onclick={() => ui.open(s.id)}><MathText text={s.title} /></button>
           </div>
         {/each}
         <form onsubmit={addSub}><input class="input wide" placeholder={tr("detail.add_subtask")} bind:value={newSub} onkeydown={stop} /></form>
@@ -185,7 +196,12 @@
 
     <section class="grow">
       <h3 class="label">{tr("detail.notes")}</h3>
-      <textarea class="input notes" bind:value={notes} oninput={notesInput} onblur={saveNotes} onkeydown={stop} placeholder={tr("detail.notes_placeholder")}></textarea>
+      {#if hasMath(notes) && !editNotes}
+        <div class="input notes shown" role="textbox" tabindex="0" aria-label={tr("detail.notes")} title={tr("detail.math_edit")}
+          onclick={() => (editNotes = true)} onkeydown={() => (editNotes = true)} onfocus={() => (editNotes = true)}><MathText text={notes} block /></div>
+      {:else}
+      <textarea class="input notes" bind:value={notes} use:focusIf={editNotes} oninput={notesInput} onblur={() => { saveNotes(); editNotes = false; }} onkeydown={stop} placeholder={tr("detail.notes_placeholder")}></textarea>
+      {/if}
     </section>
 
     <footer class="meta">
@@ -201,6 +217,8 @@
   .top :global(.ring) { margin-top: 4px; }
   .title { flex: 1; border: 0; background: none; resize: none; font: 600 17px/24px var(--font-ui); padding: 0; field-sizing: content; }
   .title:focus { outline: none; box-shadow: 0 1px 0 var(--focus); }
+  .shown { cursor: text; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .notes.shown { overflow-y: auto; }
   .x { font-size: 18px; padding: 0 8px; color: var(--text-3); }
   .parent { border: 0; background: none; text-align: left; padding: 0; margin-top: -8px; }
   .grid { display: grid; grid-template-columns: 82px 1fr; gap: 8px 10px; align-items: center; }

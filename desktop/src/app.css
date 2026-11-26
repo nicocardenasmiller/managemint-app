@@ -34,3 +34,7 @@ h1, h2, h3 { margin: 0; font-weight: 600; }
 .fresh { animation: fresh 1.5s var(--ease-effects) both; }
 @keyframes fresh { from { background-color: var(--accent-tint); } }
 @media (prefers-reduced-motion: reduce) { .fresh { animation: none; } }
+
+/* Math (KaTeX): a little smaller than its default so it sits with Inter; long display math scrolls instead of overflowing. */
+.katex { font-size: 1.08em; }
+.katex-display { margin: 0.4em 0; overflow-x: auto; overflow-y: hidden; }

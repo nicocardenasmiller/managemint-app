@@ -1,4 +1,5 @@
 <script lang="ts">
+  import MathText from "../components/MathText.svelte";
   import { tr } from "../lib/wording";
   import { store } from "../lib/store.svelte";
   import { ui } from "../lib/ui.svelte";
@@ -41,7 +42,7 @@
             <div class="title">
               {#if t.kind === "milestone"}<span class="dia">◆</span>{/if}
               {#if priorityMark(t.priority)}<b class="prio">{priorityMark(t.priority)}</b>{/if}
-              {#if t.status === "done"}✓ {/if}{t.title}
+              {#if t.status === "done"}✓ {/if}<MathText text={t.title} />
             </div>
             <div class="chips">
               {#if !single && p}<span class="code">{projectCode(p.name)}</span>{/if}

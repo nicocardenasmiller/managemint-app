@@ -1,4 +1,5 @@
 <script lang="ts">
+  import MathText from "./MathText.svelte";
   import { tr } from "../lib/wording";
   import { store } from "../lib/store.svelte";
   import { ui } from "../lib/ui.svelte";
@@ -127,7 +128,7 @@
             {#if s.name}<h3 class="label">{s.name}</h3>{/if}
             {#each rows as t}
               <div class="prow">
-                <span class="t">{t.kind === "milestone" ? "◆ " : ""}{t.title}</span>
+                <span class="t">{t.kind === "milestone" ? "◆ " : ""}<MathText text={t.title} /></span>
                 <span class="d" class:wk={t.weekend && !roll}>
                   {#if t.start_date && t.due_date && t.start_date !== t.due_date}{dateText(t.start_date)} → {/if}{dateText(t.due_date ?? t.start_date)}
                   {#if t.deadline_date}<span class="dl">⚑ {dateText(t.deadline_date)}</span>{/if}
