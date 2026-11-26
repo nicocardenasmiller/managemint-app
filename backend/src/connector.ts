@@ -1,15 +1,15 @@
 // Assistant connector: a small MCP server (Streamable HTTP, JSON responses, no sessions) that an AI assistant such as
-// Claude adds as a custom connector. It can find and read tasks, add new tasks, and edit checklists (subtasks).
-// Nothing else: no deleting, no editing existing tasks or projects.
+// Claude adds as a custom connector. It can find, read, add, edit and delete tasks, and edit checklists (subtasks).
+// Deleting is a soft delete that the assistant (or the person) can undo for 30 days; projects can't be changed.
 //
 // Sign-in is OAuth (oauth.ts): the person approves each assistant app on this server, and can remove it on the setup page.
-import type { AccessEnv } from "./access";
+import { bump, type AccessEnv } from "./access";
 
 /** What the connector needs: the database, the user's time zone, and a hook to put a new task on the calendar. */
 export interface ConnectorEnv extends AccessEnv {
   TZ?: string;
-  /** Called after a task with dates is created (Google Calendar sync on servers that have it). */
-  onTaskCreated?: (id: string) => Promise<unknown>;
+  /** Called after a task's dates, title or existence change (Google Calendar sync on servers that have it). */
+  onTaskChanged?: (id: string) => Promise<unknown>;
 }
 import { VERSION } from "./version";
 
@@ -20,6 +20,10 @@ export const MAX_TITLE = 300;
 const MAX_RESULTS = 30;
 /** New tasks per day through the connector, so a runaway assistant can't flood the planner. */
 export const MAX_NEW_TASKS_PER_DAY = 100;
+/** Deletes per day through the connector. */
+export const MAX_DELETES_PER_DAY = 30;
+/** Deleted tasks can be restored for this many days. */
+export const RESTORE_DAYS = 30;
 
 /** Today's date (YYYY-MM-DD) in the user's time zone. */
 export function todayIn(tz: string | undefined, now = new Date()): string {
@@ -51,7 +55,7 @@ export const CHECKLIST_STYLE =
   "List items in the order they will be done. Aim for 3 to 10 items; if a task needs more than about 12, suggest splitting it into " +
   "separate tasks instead. Don't repeat items already on the checklist (the server skips exact repeats) and don't add an item that " +
   "just restates the task title. Don't tick items or rename them unless the user asks. add_checklist appends to the end; " +
-  "it can't reorder or remove items, so tell the user when they need to do that in the app.";
+  "it can't reorder items, so tell the user when they need to do that in the app. Remove an item with delete_task only when the user asks.";
 
 const INSTRUCTIONS =
   "Managemint is the user's task planner. Use find_tasks to locate a task (search by words in its title), then get_task to see its " +
@@ -60,7 +64,11 @@ const INSTRUCTIONS =
   "Dates are YYYY-MM-DD in the user's time zone; find_tasks returns today's date. To answer questions like \"what's due this week\" " +
   "use find_tasks with due_from/due_to, or overdue. add_task creates a new task: use due_date for when the user plans to do it and " +
   "deadline only when they say it's a hard deadline (\"deadline\", \"has to be done by\", \"must\"). Before adding several tasks, " +
-  "check with find_tasks that they don't already exist, and tell the user what you added.";
+  "check with find_tasks that they don't already exist, and tell the user what you added. " +
+  "Changing and deleting: only change or delete tasks the user asked about. update_task returns the old values; tell the user " +
+  "what changed, and use them to undo if the user asks. Before deleting, make sure you have the right task, and confirm with " +
+  "the user unless they clearly asked to delete that task. Prefer marking a task done over deleting it when it was finished. " +
+  `Deleted tasks can be brought back with restore_task for ${RESTORE_DAYS} days (find_tasks with deleted: true lists them).`;
 
 type Json = Record<string, unknown>;
 const str = { type: "string" } as const;
@@ -81,6 +89,7 @@ export const TOOLS = [
         due_from: { ...str, description: "Only tasks due (or with a deadline) on or after this date, YYYY-MM-DD." },
         due_to: { ...str, description: "Only tasks due (or with a deadline) on or before this date, YYYY-MM-DD." },
         overdue: { type: "boolean", description: "Only open tasks whose due date or deadline is before today." },
+        deleted: { type: "boolean", description: `Instead list tasks deleted in the last ${RESTORE_DAYS} days (newest first), to restore one.` },
       },
       additionalProperties: false,
     },
@@ -119,6 +128,43 @@ export const TOOLS = [
       additionalProperties: false,
     },
     annotations: { title: "Add task", readOnlyHint: false, destructiveHint: false, idempotentHint: false },
+  },
+  {
+    name: "update_task",
+    description: "Change a task: title, notes, project, dates, time, priority or status. Give only the fields to change; null clears " +
+      "a date, time or the notes. Returns the task and the previous values of what changed (use them to undo). " +
+      "For checklist items use update_checklist_item instead.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        task_id: { ...str, description: "The task id from find_tasks." },
+        title: { ...str, description: "New title." },
+        notes: { type: ["string", "null"], description: "New notes (replaces the old notes entirely; get_task first to keep what's there)." },
+        project: { ...str, description: "Move to this project (id or name). Its checklist moves with it." },
+        start_date: { type: ["string", "null"], description: "YYYY-MM-DD or null." },
+        due_date: { type: ["string", "null"], description: "YYYY-MM-DD or null (clearing it also clears due_time)." },
+        due_time: { type: ["string", "null"], description: "HH:MM, 24-hour, or null." },
+        deadline: { type: ["string", "null"], description: "YYYY-MM-DD or null. Only for hard deadlines." },
+        priority: { type: "string", enum: ["high", "medium", "none"] },
+        status: { type: "string", enum: ["todo", "doing", "done"], description: "done = checked off; doing = in progress." },
+      },
+      required: ["task_id"],
+      additionalProperties: false,
+    },
+    annotations: { title: "Update task", readOnlyHint: false, destructiveHint: false, idempotentHint: true },
+  },
+  {
+    name: "delete_task",
+    description: `Delete a task (with its checklist) or a single checklist item. It can be restored with restore_task for ${RESTORE_DAYS} days. ` +
+      `At most ${MAX_DELETES_PER_DAY} deletes a day. Confirm with the user first unless they clearly asked to delete this task.`,
+    inputSchema: { type: "object", properties: { task_id: { ...str, description: "Task or checklist item id." } }, required: ["task_id"], additionalProperties: false },
+    annotations: { title: "Delete task", readOnlyHint: false, destructiveHint: true, idempotentHint: true },
+  },
+  {
+    name: "restore_task",
+    description: `Bring back a task deleted in the last ${RESTORE_DAYS} days, with the checklist it had. Ids from find_tasks with deleted: true.`,
+    inputSchema: { type: "object", properties: { task_id: { ...str, description: "The deleted task's id." } }, required: ["task_id"], additionalProperties: false },
+    annotations: { title: "Restore task", readOnlyHint: false, destructiveHint: false, idempotentHint: true },
   },
   {
     name: "add_checklist",
@@ -197,8 +243,9 @@ const likeEscape = (s: string) => s.replace(/[\\%_]/g, (c) => "\\" + c);
 async function findTasks(env: ConnectorEnv, a: Json) {
   const names = await projectNames(env);
   const today = todayIn(env.TZ);
-  const where = ["t.deleted_at IS NULL", "t.parent_id IS NULL", "t.status != 'cancelled'"];
-  const binds: unknown[] = [];
+  const where = [a.deleted ? "t.deleted_at > ?" : "t.deleted_at IS NULL", "t.parent_id IS NULL", "t.status != 'cancelled'"];
+  const binds: unknown[] = a.deleted ? [restoreCutoff()] : [];
+  if (a.deleted) a = { ...a, include_done: true };
   const status = typeof a.status === "string" && ["todo", "doing", "done"].includes(a.status) ? a.status : null;
   if (a.status !== undefined && !status) throw new ToolError("status must be todo, doing or done.");
   if (status) { where.push("t.status = ?"); binds.push(status); }
@@ -218,11 +265,11 @@ async function findTasks(env: ConnectorEnv, a: Json) {
   const words = typeof a.query === "string" ? a.query.toLowerCase().split(/\s+/).filter(Boolean).slice(0, 8) : [];
   for (const w of words) { where.push("LOWER(t.title) LIKE ? ESCAPE '\\'"); binds.push(`%${likeEscape(w)}%`); }
   const r = await env.DB.prepare(
-    `SELECT t.id, t.title, t.project_id, t.status, t.priority, t.start_date, t.due_date, t.due_time, t.deadline,
-            (SELECT COUNT(*) FROM tasks s WHERE s.parent_id = t.id AND s.deleted_at IS NULL AND s.status != 'cancelled') AS items,
-            (SELECT COUNT(*) FROM tasks s WHERE s.parent_id = t.id AND s.deleted_at IS NULL AND s.status = 'done') AS items_done
+    `SELECT t.id, t.title, t.project_id, t.status, t.priority, t.start_date, t.due_date, t.due_time, t.deadline${a.deleted ? ", t.deleted_at" : ""},
+            (SELECT COUNT(*) FROM tasks s WHERE s.parent_id = t.id AND (s.deleted_at IS NULL OR s.deleted_at = t.deleted_at) AND s.status != 'cancelled') AS items,
+            (SELECT COUNT(*) FROM tasks s WHERE s.parent_id = t.id AND (s.deleted_at IS NULL OR s.deleted_at = t.deleted_at) AND s.status = 'done') AS items_done
      FROM tasks t WHERE ${where.join(" AND ")}
-     ORDER BY t.status = 'done', COALESCE(t.due_date, t.deadline, '9999'), t.sort LIMIT ${MAX_RESULTS + 1}`,
+     ORDER BY ${a.deleted ? "t.deleted_at DESC" : "t.status = 'done', COALESCE(t.due_date, t.deadline, '9999'), t.sort"} LIMIT ${MAX_RESULTS + 1}`,
   ).bind(...binds).all<Json & { project_id: string; priority: number; items: number; items_done: number }>();
   const tasks = r.results.slice(0, MAX_RESULTS).map(({ project_id, priority, items, items_done, ...t }) =>
     ({ ...t, priority: priorityName(priority), project: names.get(project_id) ?? project_id, checklist: items ? `${items_done}/${items} done` : "none" }));
@@ -276,7 +323,7 @@ async function addTask(env: ConnectorEnv, a: Json) {
   ).bind(id, pid, title, typeof a.notes === "string" ? a.notes.slice(0, 10000) : "", a.start_date ?? null, a.due_date ?? null, a.due_time ?? null,
     a.deadline ?? null, PRIORITY[(a.priority as string) ?? "none"], sort, now, now).run();
   if (items.length) await insertItems(env, { id, project_id: pid, section_id: null }, items, 0);
-  if ((a.due_date || a.deadline) && env.onTaskCreated) await env.onTaskCreated(id).catch(() => null);
+  if ((a.due_date || a.deadline) && env.onTaskChanged) await env.onTaskChanged(id).catch(() => null);
   return getTask(env, { task_id: id });
 }
 
@@ -306,7 +353,7 @@ async function addChecklist(env: AccessEnv, a: Json) {
 
 async function updateItem(env: AccessEnv, a: Json) {
   const s = await liveTask(env, a.item_id);
-  if (!s.parent_id) throw new ToolError("That's a task, not a checklist item. This connector only changes checklist items.");
+  if (!s.parent_id) throw new ToolError("That's a task, not a checklist item. Use update_task for tasks.");
   const sets: string[] = [], vals: unknown[] = [];
   if (typeof a.done === "boolean") { sets.push("status = ?", "completed_at = ?"); vals.push(a.done ? "done" : "todo", a.done ? nowIso() : null); }
   if (a.title !== undefined) {
@@ -319,11 +366,92 @@ async function updateItem(env: AccessEnv, a: Json) {
   return { task_id: s.parent_id, checklist: await checklist(env, s.parent_id) };
 }
 
+const restoreCutoff = () => new Date(Date.now() - RESTORE_DAYS * 86400_000).toISOString();
+const optDate = (k: string, v: unknown) => { if (v !== null && !isDate(v)) throw new ToolError(`${k} must be a date like 2026-12-01, or null.`); };
+/** Fields that change what the calendar shows. */
+const CALENDAR_FIELDS = new Set(["title", "notes", "status", "due_date", "due_time", "deadline", "project_id"]);
+
+async function updateTask(env: ConnectorEnv, a: Json) {
+  const t = await liveTask(env, a.task_id);
+  if (t.parent_id) throw new ToolError("That's a checklist item. Use update_checklist_item for items.");
+  const next: Record<string, unknown> = {};
+  if (a.title !== undefined) { const v = cleanTitle(a.title); if (!v) throw new ToolError("title can't be empty."); next.title = v; }
+  if (a.notes !== undefined) next.notes = typeof a.notes === "string" ? a.notes.slice(0, 10000) : "";
+  if (a.project !== undefined) next.project_id = await projectId(env, a.project);
+  for (const k of ["start_date", "due_date", "deadline"]) if (a[k] !== undefined) { optDate(k, a[k]); next[k] = a[k]; }
+  if (a.due_time !== undefined) { if (a.due_time !== null && !isTime(a.due_time)) throw new ToolError("due_time must be HH:MM, 24-hour, or null."); next.due_time = a.due_time; }
+  if (a.due_date === null && a.due_time === undefined && t.due_time) next.due_time = null;
+  if (a.priority !== undefined) { if (!(typeof a.priority === "string" && a.priority in PRIORITY)) throw new ToolError("priority must be high, medium or none."); next.priority = PRIORITY[a.priority]; }
+  if (a.status !== undefined) { if (!["todo", "doing", "done"].includes(a.status as string)) throw new ToolError("status must be todo, doing or done."); next.status = a.status; }
+  // Check the result as a whole: a time needs a date, and work can't start after it's due.
+  const after = { ...t, ...next } as TaskRow;
+  if (after.due_time && !after.due_date) throw new ToolError("due_time needs a due_date.");
+  const end = after.due_date ?? after.deadline;
+  if (after.start_date && end && after.start_date > end) throw new ToolError("start_date would be after the due date.");
+  const changed = Object.keys(next).filter((k) => (t as unknown as Json)[k] !== next[k]);
+  if (!changed.length) return { task: await getTask(env, { task_id: t.id }), changed: [], note: "Nothing was different, so nothing changed." };
+  const previous: Json = {};
+  const names = changed.includes("project_id") ? await projectNames(env) : new Map<string, string>();
+  for (const k of changed) previous[k === "project_id" ? "project" : k] =
+    k === "priority" ? priorityName(t.priority) : k === "project_id" ? names.get(t.project_id) ?? t.project_id : (t as unknown as Json)[k];
+  const now = nowIso();
+  const sets = changed.map((k) => `${k} = ?`), vals = changed.map((k) => next[k]);
+  if (changed.includes("status")) { sets.push("completed_at = ?"); vals.push(next.status === "done" ? now : null); }
+  if (changed.includes("project_id")) { sets.push("section_id = NULL"); }
+  const stmts = [env.DB.prepare(`UPDATE tasks SET ${sets.join(", ")}, updated_at = ? WHERE id = ?`).bind(...vals, now, t.id)];
+  if (changed.includes("project_id"))
+    stmts.push(env.DB.prepare("UPDATE tasks SET project_id = ?, section_id = NULL, updated_at = ? WHERE parent_id = ? AND deleted_at IS NULL").bind(next.project_id, now, t.id));
+  await env.DB.batch(stmts);
+  if (changed.some((k) => CALENDAR_FIELDS.has(k)) && env.onTaskChanged) await env.onTaskChanged(t.id).catch(() => null);
+  return { task: await getTask(env, { task_id: t.id }), previous };
+}
+
+async function deleteTask(env: ConnectorEnv, a: Json) {
+  const t = await liveTask(env, a.task_id);
+  if ((await bump(env, `connector-delete:${new Date().toISOString().slice(0, 10)}`, 2 * 86400)) > MAX_DELETES_PER_DAY)
+    throw new ToolError(`The assistant can delete at most ${MAX_DELETES_PER_DAY} tasks a day. The user can still delete in the app.`);
+  const now = nowIso();
+  // The task and its open checklist get the same deleted_at, so restore_task brings back exactly those.
+  await env.DB.batch([
+    env.DB.prepare("UPDATE tasks SET deleted_at = ?, updated_at = ? WHERE id = ?").bind(now, now, t.id),
+    env.DB.prepare("UPDATE tasks SET deleted_at = ?, updated_at = ? WHERE parent_id = ? AND deleted_at IS NULL").bind(now, now, t.id),
+  ]);
+  // Checklist items are never on the calendar.
+  if (!t.parent_id && env.onTaskChanged) await env.onTaskChanged(t.id).catch(() => null);
+  return t.parent_id
+    ? { deleted_checklist_item: t.title, task_id: t.parent_id, restore_with: { tool: "restore_task", task_id: t.id } }
+    : { deleted_task: t.title, id: t.id, restorable_until: new Date(Date.now() + RESTORE_DAYS * 86400_000).toISOString().slice(0, 10) };
+}
+
+async function restoreTask(env: ConnectorEnv, a: Json) {
+  if (typeof a.task_id !== "string" || !a.task_id) throw new ToolError("task_id is required.");
+  const t = await env.DB.prepare("SELECT * FROM tasks WHERE id = ?").bind(a.task_id).first<TaskRow>();
+  if (!t) throw new ToolError(`No task with id ${a.task_id}.`);
+  if (!t.deleted_at) return { note: "That task isn't deleted.", task: await getTask(env, { task_id: t.id }) };
+  if (t.deleted_at < restoreCutoff()) throw new ToolError(`That task was deleted more than ${RESTORE_DAYS} days ago and can't be restored here.`);
+  if (t.parent_id && !(await env.DB.prepare("SELECT id FROM tasks WHERE id = ? AND deleted_at IS NULL").bind(t.parent_id).first()))
+    throw new ToolError("This checklist item's task is deleted. Restore the task instead.");
+  const now = nowIso();
+  // A task whose project was deleted meanwhile comes back in the Inbox.
+  const live = await env.DB.prepare("SELECT id FROM projects WHERE id = ? AND deleted_at IS NULL").bind(t.project_id).first();
+  const pid = live ? t.project_id : "inbox";
+  await env.DB.batch([
+    env.DB.prepare(`UPDATE tasks SET deleted_at = NULL, updated_at = ?, project_id = ?, section_id = ${live ? "section_id" : "NULL"} WHERE id = ?`).bind(now, pid, t.id),
+    env.DB.prepare(`UPDATE tasks SET deleted_at = NULL, updated_at = ?, project_id = ?, section_id = ${live ? "section_id" : "NULL"} WHERE parent_id = ? AND deleted_at = ?`)
+      .bind(now, pid, t.id, t.deleted_at),
+  ]);
+  if (env.onTaskChanged) await env.onTaskChanged(t.id).catch(() => null);
+  return { restored: await getTask(env, { task_id: t.id }) };
+}
+
 const HANDLERS: Record<string, (env: ConnectorEnv, a: Json) => Promise<unknown>> = {
   find_tasks: findTasks,
   list_projects: async (env) => ({ projects: [...(await projectNames(env))].map(([id, name]) => ({ id, name })) }),
   get_task: getTask,
   add_task: addTask,
+  update_task: updateTask,
+  delete_task: deleteTask,
+  restore_task: restoreTask,
   add_checklist: addChecklist,
   update_checklist_item: updateItem,
 };
