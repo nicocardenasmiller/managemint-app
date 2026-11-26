@@ -66,7 +66,7 @@
       <MathText text={task.title} />
     </span>
   {/if}
-  {#if subs.length}<span class="meta subs" title={tr("taskrow.subtasks")}>{subs.filter((s) => s.status === "done").length}/{subs.length}</span>{/if}
+  {#if subs.length}{@const n = subs.filter((s) => s.status === "done").length}<span class="meta subs" title={tr("taskrow.subtasks")}><i class="pie" style="--p:{(n / subs.length) * 100}%" aria-hidden="true"></i>{n}/{subs.length}</span>{/if}
   {#if task.notes}<span class="meta" title={tr("taskrow.has_notes")} aria-label={tr("taskrow.has_notes")}>¶</span>{/if}
   {#if task.status === "doing"}<span class="doing">{tr("taskrow.in_progress")}</span>{/if}
   <span class="spacer"></span>
@@ -93,6 +93,8 @@
   .title-edit { flex: 1; }
   .spacer { flex: 1; }
   .subs, .sec { white-space: nowrap; }
+  .subs { display: inline-flex; align-items: center; gap: 4px; }
+  .pie { width: 11px; height: 11px; border-radius: 50%; background: radial-gradient(var(--surface) 0 2.5px, transparent 3px), conic-gradient(var(--accent) var(--p), var(--border-strong) 0); }
   .sec { color: var(--text-3); font-size: 12px; }
   .doing { font-size: 11px; color: var(--accent); border: 1px solid var(--accent); border-radius: 10px; padding: 0 6px; white-space: nowrap; }
   .dl { font-size: 12px; color: var(--text-2); white-space: nowrap; }

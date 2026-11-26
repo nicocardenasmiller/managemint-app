@@ -523,7 +523,7 @@ desktop.quickadd.save_all: Save all {n}
 desktop.taskrow.milestone: Milestone
 desktop.taskrow.title_label: Title
 desktop.taskrow.priority: Priority
-desktop.taskrow.subtasks: Subtasks
+desktop.taskrow.subtasks: Checklist
 desktop.taskrow.has_notes: Has notes
 desktop.taskrow.in_progress: In progress
 desktop.taskrow.deadline: Deadline {date}
@@ -622,7 +622,7 @@ desktop.detail.priority_high_full: High priority
 desktop.detail.label: Task details
 desktop.detail.title_label: Title
 desktop.detail.close: Close (Esc)
-desktop.detail.subtask_of: ↑ Subtask of {title}
+desktop.detail.subtask_of: ↑ Checklist item in {title}
 desktop.detail.project: Project
 desktop.detail.section: Section
 desktop.detail.new_section_prompt: New section name
@@ -646,8 +646,14 @@ desktop.detail.remove_dep: Remove dependency
 desktop.detail.dep_placeholder: Search tasks to add…
 desktop.detail.dep_label: Add a task this one waits for
 desktop.detail.blocks: Blocks
-desktop.detail.subtasks: Subtasks
-desktop.detail.add_subtask: + Add subtask
+desktop.detail.checklist: Checklist
+desktop.detail.checklist_progress: {done} of {total}
+desktop.detail.checklist_add: Add an item
+desktop.detail.checklist_add_first: Add a checklist item (paste a list to add several)
+desktop.detail.checklist_item: Checklist item
+desktop.detail.checklist_open: Open as its own task
+desktop.detail.checklist_remove: Remove
+desktop.detail.checklist_drag: Drag to reorder
 desktop.detail.notes: Notes
 desktop.detail.notes_placeholder: Notes
 desktop.detail.math_edit: Click to edit
@@ -1159,7 +1165,7 @@ android.components.mark_not_done: Mark {title} not done
 android.components.complete: Complete {title}
 android.components.deadline: Deadline
 android.components.not_synced: not synced
-android.components.checklist_count: ☑ {done}/{total}
+android.components.checklist_count: {done}/{total}
 android.components.deadline_row: Deadline: {title}
 android.components.add_date: Add date
 android.components.time: Time
@@ -1292,9 +1298,11 @@ android.tasksheet.notes: Notes
 android.tasksheet.delete: Delete
 android.tasksheet.done: Done
 android.tasksheet.checklist: Checklist
-android.tasksheet.checklist_progress: Checklist {done}/{total}
+android.tasksheet.checklist_progress: {done} of {total}
 android.tasksheet.checklist_add: Add an item
-android.tasksheet.checklist_remove: Remove {title}
+android.tasksheet.checklist_add_first: Add a checklist item
+android.tasksheet.checklist_more: More options for {title}
+android.tasksheet.checklist_remove: Remove
 
 ## manifest
 android.manifest.app_name: Managemint

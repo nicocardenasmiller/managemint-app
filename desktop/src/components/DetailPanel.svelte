@@ -5,8 +5,9 @@
   import { ui } from "../lib/ui.svelte";
   import { hueOf, hueVars } from "../lib/colors";
   import { deadlineState, isDate, label, today } from "../lib/dates";
-  import { projectList, sectionsOf, subtasksOf } from "../lib/query";
+  import { projectList, sectionsOf } from "../lib/query";
   import CheckRing from "./CheckRing.svelte";
+  import Checklist from "./Checklist.svelte";
   import { hasMath } from "../lib/math";
   import type { Status, Task, TaskPatch } from "../lib/types";
 
@@ -61,16 +62,6 @@
       .sort((a, b) => Number(b.project_id === task.project_id) - Number(a.project_id === task.project_id))
       .slice(0, 6);
   });
-
-  // Subtasks
-  let subs = $derived(task ? subtasksOf(task.id) : []);
-  let newSub = $state("");
-  function addSub(e: Event) {
-    e.preventDefault();
-    if (!task || !newSub.trim()) return;
-    store.createTask({ title: newSub.trim(), project_id: task.project_id, section_id: task.section_id, parent_id: task.id, sort: subs.length });
-    newSub = "";
-  }
 
   let t0 = $derived(today());
   let created = $derived(task ? new Date(task.created_at).toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "");
@@ -181,18 +172,7 @@
       {/if}
     </section>
 
-    {#if !task.parent_id}
-      <section>
-        <h3 class="label">{tr("detail.subtasks")} {#if subs.length}<span>{subs.filter((s) => s.status === "done").length}/{subs.length}</span>{/if}</h3>
-        {#each subs as s (s.id)}
-          <div class="sub">
-            <CheckRing status={s.status} title={s.title} onToggle={() => store.toggleDone(s.id)} />
-            <button class="link" class:faded={s.status === "done"} onclick={() => ui.open(s.id)}><MathText text={s.title} /></button>
-          </div>
-        {/each}
-        <form onsubmit={addSub}><input class="input wide" placeholder={tr("detail.add_subtask")} bind:value={newSub} onkeydown={stop} /></form>
-      </section>
-    {/if}
+    {#if !task.parent_id}<Checklist {task} />{/if}
 
     <section class="grow">
       <h3 class="label">{tr("detail.notes")}</h3>
@@ -234,14 +214,12 @@
   .chip { display: flex; align-items: center; gap: 8px; padding: 2px 4px 2px 8px; border: 1px solid var(--border); border-radius: var(--r-md); font-size: 13px; }
   .link { border: 0; background: none; padding: 0; text-align: left; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
   .link:hover { text-decoration: underline; }
-  .faded { color: var(--text-2); }
   .rm { border: 0; background: none; color: var(--text-3); font-size: 15px; }
   .depadd { position: relative; }
-  .depadd .input, .wide { width: 100%; }
+  .depadd .input { width: 100%; }
   .menu { position: absolute; left: 0; right: 0; top: 100%; z-index: 5; list-style: none; margin: 4px 0 0; padding: 4px; background: var(--surface-raised); border-radius: var(--r-md); box-shadow: var(--shadow-float); }
   .menu button { width: 100%; text-align: left; border: 0; background: none; padding: 5px 8px; border-radius: 6px; font-size: 13px; }
   .menu button:hover { background: var(--hover); }
-  .sub { display: flex; gap: 8px; align-items: center; padding: 2px 0; }
   .grow { flex: 1; grid-template-rows: auto 1fr; }
   .notes { width: 100%; min-height: 120px; height: 100%; resize: vertical; font-size: 13px; line-height: 20px; }
   footer { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--border); padding-top: 10px; font-size: 12px; }
