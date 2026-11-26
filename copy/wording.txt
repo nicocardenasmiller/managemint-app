@@ -112,6 +112,13 @@ site.home.iphone_voice: Voice capture can be unreliable in Home Screen web apps 
 site.home.laptop_intro: The laptop version, with the timeline, is also provided by your own server.
 site.home.laptop_step1: On your setup page, choose <em>Open Managemint</em>. It's already signed in on that browser.
 site.home.laptop_step2: To get it in its own window, install it. In Chrome or Edge, use <em>Install Managemint</em> in the address bar or menu. In Safari on a Mac, use <em>File → Add to Dock</em>.
+site.home.assistant_title: Optional: connect an AI assistant
+site.home.assistant_intro: If you use an AI assistant app that supports custom connectors (also called MCP), you can let it see your tasks and add checklists to them. For example: "break my literature review task into a checklist".
+site.home.assistant_step1: On your setup page, under <em>AI assistant</em>, copy the connector address. It's your server's address followed by <code>/mcp</code>.
+site.home.assistant_step2: In your assistant app, add a custom connector (usually under <em>Settings → Connectors</em>) and paste the address. Leave any client ID or secret fields empty.
+site.home.assistant_step3: A Managemint page opens. Check that it names your assistant app, enter your setup password and choose <em>Allow</em>.
+site.home.assistant_step4: Ask the assistant about a task. Checklist items it adds show up in the task on your phone and laptop.
+site.home.assistant_limits: The assistant can find and read your tasks and add, tick and rename checklist items. It can't delete anything or change the tasks themselves. You can remove its access at any time on your setup page.
 site.home.updates_title: Updates and feedback
 site.home.updates: Your copy doesn't update by itself. When there's a new version, the app says so. Open your copy of Managemint on GitHub, go to <em>Actions → Update Managemint → Run workflow</em>; Cloudflare then updates your server within a few minutes. On Android, also download the new app from this page.
 site.home.feedback: If something breaks or is missing, <a href="https://github.com/{{REPO}}/issues/new">open an issue on GitHub</a> or tell Nico directly. Issues are public, so leave out anything private.
@@ -125,7 +132,7 @@ site.privacy.page_title: Privacy · Managemint
 site.privacy.nav_start: Get started
 site.privacy.nav_app: Get the app
 site.privacy.title: Privacy
-site.privacy.updated: Last updated November 22, 2026.
+site.privacy.updated: Last updated November 26, 2026.
 site.privacy.intro: Managemint is a small test project by Nico, shared with friends. There is no company and no central server. Each person runs their own copy in their own accounts, so <strong>Nico can't see your tasks, your calendar or your AI key</strong>.
 site.privacy.storage_title: Where your data is stored
 site.privacy.storage: Your tasks, projects, notes and settings are stored in a database in <strong>your own Cloudflare account</strong>, created when you deploy. The phone app keeps a copy on your phone so it works offline. The web app keeps a sign-in key in your browser. You can delete everything by deleting the Worker and its database in your Cloudflare dashboard.
@@ -134,6 +141,7 @@ site.privacy.services_cloudflare: <strong>Cloudflare</strong> runs your server a
 site.privacy.services_anthropic: <strong>Anthropic</strong> (the AI) receives the text of what you capture, your answers when you set up a project with the assistant, and your planning notes, so it can turn them into tasks and dates. It's your own API key and your own account. Anthropic doesn't train on API data by default. See <a href="https://www.anthropic.com/legal/privacy">Anthropic's privacy policy</a>.
 site.privacy.services_calendar: <strong>Your calendar app</strong>, if you subscribe to your calendar link. Apple Calendar, Google Calendar or Outlook downloads your dated tasks (titles, notes, dates and project names) from your server through a private link. Anyone who has that link can read those tasks, so keep it to yourself; you can replace it with a new one on your setup page at any time.
 site.privacy.services_google: <strong>Google Calendar direct sync</strong>, only on servers that have it set up. Managemint asks only for permission to manage calendars it creates itself. It creates one calendar called "Managemint" and can't see or change your other calendars or your email. You can disconnect on your setup page or in your <a href="https://myaccount.google.com/permissions">Google account settings</a>.
+site.privacy.services_assistant: <strong>Your AI assistant app</strong>, only if you connect one on your setup page. It can read your projects and tasks (titles, notes, dates and checklists) and add or change checklist items, and the assistant's company processes what it reads under its own privacy policy. You can remove its access on your setup page at any time.
 site.privacy.services_github: <strong>GitHub</strong>: your server checks the public Managemint repository for new versions. That request contains no personal data.
 site.privacy.voice_title: Voice input
 site.privacy.voice: When you speak a task, your phone or browser turns the speech into text with its own speech recognition (Google on Android, Apple in Safari, Google in Chrome). Managemint only receives the text.
@@ -219,6 +227,25 @@ setup.pair_android: <b>Android:</b> open the Managemint app and choose <b>Scan c
 setup.pair_browser: <b>Use it in this browser:</b>
 setup.pair_sign_in: Sign in this browser
 setup.pair_failed: That code didn't work. Make a new one on the setup page.
+setup.assistant_title: 5 · AI assistant (optional)
+setup.assistant_help: Let an AI assistant app see your tasks and add checklists to them. In an assistant app that supports custom connectors (MCP), add a connector with this address, then approve it with your setup password on the page that opens.
+setup.assistant_copy: Copy address
+setup.assistant_copied: Address copied.
+setup.assistant_none: No assistants connected yet.
+setup.assistant_line: {name} · added {date} · last used {used}
+setup.assistant_remove: Remove
+setup.assistant_remove_confirm: Remove {name}? It loses access at once. Add the connector again in the assistant app to reconnect.
+setup.connect_page_title: Connect an assistant to Managemint
+setup.connect_title: Connect an assistant
+setup.connect_ask: {name} wants to use your Managemint
+setup.connect_can: It will be able to see your projects and tasks, and add, tick and rename checklist items on tasks.
+setup.connect_cannot: It can't delete anything or change the tasks themselves. You can remove it any time on the setup page.
+setup.connect_only_if: Only allow this if you just added Managemint in your assistant app yourself.
+setup.connect_signed_in: You're signed in to Managemint on this browser.
+setup.connect_allow: Allow
+setup.connect_cancel: Cancel
+setup.connect_done: Allowed. Going back to your assistant…
+setup.connect_cancelled: Cancelled. You can close this tab.
 
 # ====================================================================================================
 # SERVER MESSAGES (shown on the setup page, in the apps and in calendars)
@@ -236,6 +263,9 @@ server.google_connected: Google Calendar connected. Tasks with dates will appear
 server.no_setup_password: No setup password is set on this server (SETUP_PASSWORD).
 server.too_many_attempts: too many attempts, try again in an hour
 server.wrong_password: wrong password
+server.oauth_unknown_client: This sign-in link isn't from an assistant this server knows. Start again from your assistant app.
+server.oauth_bad_redirect: This sign-in link has a return address the assistant didn't register. Start again from your assistant app.
+server.oauth_bad_request: This sign-in link is incomplete or out of date. Start again from your assistant app.
 server.pair_code_bad: That code is wrong, expired or already used. Make a new one on the setup page.
 server.ai_no_key: No AI key on this server.
 server.ai_unreachable: Couldn't reach Anthropic. Try again.
@@ -1128,6 +1158,7 @@ android.components.mark_not_done: Mark {title} not done
 android.components.complete: Complete {title}
 android.components.deadline: Deadline
 android.components.not_synced: not synced
+android.components.checklist_count: ☑ {done}/{total}
 android.components.deadline_row: Deadline: {title}
 android.components.add_date: Add date
 android.components.time: Time
@@ -1259,6 +1290,10 @@ android.mic.stop: Stop dictating
 android.tasksheet.notes: Notes
 android.tasksheet.delete: Delete
 android.tasksheet.done: Done
+android.tasksheet.checklist: Checklist
+android.tasksheet.checklist_progress: Checklist {done}/{total}
+android.tasksheet.checklist_add: Add an item
+android.tasksheet.checklist_remove: Remove {title}
 
 ## manifest
 android.manifest.app_name: Managemint
