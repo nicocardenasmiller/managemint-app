@@ -113,12 +113,12 @@ site.home.laptop_intro: The laptop version, with the timeline, is also provided 
 site.home.laptop_step1: On your setup page, choose <em>Open Managemint</em>. It's already signed in on that browser.
 site.home.laptop_step2: To get it in its own window, install it. In Chrome or Edge, use <em>Install Managemint</em> in the address bar or menu. In Safari on a Mac, use <em>File → Add to Dock</em>.
 site.home.assistant_title: Optional: connect an AI assistant
-site.home.assistant_intro: If you use an AI assistant app that supports custom connectors (also called MCP), you can let it see your tasks and add checklists to them. For example: "break my literature review task into a checklist".
+site.home.assistant_intro: If you use an AI assistant app that supports custom connectors (also called MCP), you can let it see your tasks, add new ones and add checklists to them. For example: "what's due this week?", "turn this email from my advisor into tasks" or "break my literature review task into a checklist".
 site.home.assistant_step1: On your setup page, under <em>AI assistant</em>, copy the connector address. It's your server's address followed by <code>/mcp</code>.
 site.home.assistant_step2: In your assistant app, add a custom connector (usually under <em>Settings → Connectors</em>) and paste the address. Leave any client ID or secret fields empty.
 site.home.assistant_step3: A Managemint page opens. Check that it names your assistant app, enter your setup password and choose <em>Allow</em>.
-site.home.assistant_step4: Ask the assistant about a task. Checklist items it adds show up in the task on your phone and laptop.
-site.home.assistant_limits: The assistant can find and read your tasks and add, tick and rename checklist items. It can't delete anything or change the tasks themselves. You can remove its access at any time on your setup page.
+site.home.assistant_step4: Ask the assistant about your tasks. Tasks and checklist items it adds show up on your phone, laptop and calendar.
+site.home.assistant_limits: The assistant can find and read your tasks, add new tasks, and add, tick and rename checklist items. It can't delete anything or change tasks that already exist. You can remove its access at any time on your setup page.
 site.home.updates_title: Updates and feedback
 site.home.updates: Your copy doesn't update by itself. When there's a new version, the app says so. Open your copy of Managemint on GitHub, go to <em>Actions → Update Managemint → Run workflow</em>; Cloudflare then updates your server within a few minutes. On Android, also download the new app from this page.
 site.home.feedback: If something breaks or is missing, <a href="https://github.com/{{REPO}}/issues/new">open an issue on GitHub</a> or tell Nico directly. Issues are public, so leave out anything private.
@@ -141,7 +141,7 @@ site.privacy.services_cloudflare: <strong>Cloudflare</strong> runs your server a
 site.privacy.services_anthropic: <strong>Anthropic</strong> (the AI) receives the text of what you capture, your answers when you set up a project with the assistant, and your planning notes, so it can turn them into tasks and dates. It's your own API key and your own account. Anthropic doesn't train on API data by default. See <a href="https://www.anthropic.com/legal/privacy">Anthropic's privacy policy</a>.
 site.privacy.services_calendar: <strong>Your calendar app</strong>, if you subscribe to your calendar link. Apple Calendar, Google Calendar or Outlook downloads your dated tasks (titles, notes, dates and project names) from your server through a private link. Anyone who has that link can read those tasks, so keep it to yourself; you can replace it with a new one on your setup page at any time.
 site.privacy.services_google: <strong>Google Calendar direct sync</strong>, only on servers that have it set up. Managemint asks only for permission to manage calendars it creates itself. It creates one calendar called "Managemint" and can't see or change your other calendars or your email. You can disconnect on your setup page or in your <a href="https://myaccount.google.com/permissions">Google account settings</a>.
-site.privacy.services_assistant: <strong>Your AI assistant app</strong>, only if you connect one on your setup page. It can read your projects and tasks (titles, notes, dates and checklists) and add or change checklist items, and the assistant's company processes what it reads under its own privacy policy. You can remove its access on your setup page at any time.
+site.privacy.services_assistant: <strong>Your AI assistant app</strong>, only if you connect one on your setup page. It can read your projects and tasks (titles, notes, dates and checklists), add new tasks, and add or change checklist items, and the assistant's company processes what it reads under its own privacy policy. You can remove its access on your setup page at any time.
 site.privacy.services_github: <strong>GitHub</strong>: your server checks the public Managemint repository for new versions. That request contains no personal data.
 site.privacy.voice_title: Voice input
 site.privacy.voice: When you speak a task, your phone or browser turns the speech into text with its own speech recognition (Google on Android, Apple in Safari, Google in Chrome). Managemint only receives the text.
@@ -228,7 +228,7 @@ setup.pair_browser: <b>Use it in this browser:</b>
 setup.pair_sign_in: Sign in this browser
 setup.pair_failed: That code didn't work. Make a new one on the setup page.
 setup.assistant_title: 5 · AI assistant (optional)
-setup.assistant_help: Let an AI assistant app see your tasks and add checklists to them. In an assistant app that supports custom connectors (MCP), add a connector with this address, then approve it with your setup password on the page that opens.
+setup.assistant_help: Let an AI assistant app see your tasks, add new tasks and add checklists to them. In an assistant app that supports custom connectors (MCP), add a connector with this address, then approve it with your setup password on the page that opens.
 setup.assistant_copy: Copy address
 setup.assistant_copied: Address copied.
 setup.assistant_none: No assistants connected yet.
@@ -238,8 +238,8 @@ setup.assistant_remove_confirm: Remove {name}? It loses access at once. Add the 
 setup.connect_page_title: Connect an assistant to Managemint
 setup.connect_title: Connect an assistant
 setup.connect_ask: {name} wants to use your Managemint
-setup.connect_can: It will be able to see your projects and tasks, and add, tick and rename checklist items on tasks.
-setup.connect_cannot: It can't delete anything or change the tasks themselves. You can remove it any time on the setup page.
+setup.connect_can: It will be able to see your projects and tasks, add new tasks, and add, tick and rename checklist items.
+setup.connect_cannot: It can't delete anything or change tasks that already exist. You can remove it any time on the setup page.
 setup.connect_only_if: Only allow this if you just added Managemint in your assistant app yourself.
 setup.connect_signed_in: You're signed in to Managemint on this browser.
 setup.connect_allow: Allow
