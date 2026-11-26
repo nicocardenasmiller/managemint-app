@@ -108,6 +108,14 @@ export const SETUP_HTML = `<!doctype html><html lang="en"><head><meta charset="u
     <a class="btn primary" href="/app/">${w("use_open")}</a>
     <p class="muted" style="margin-top:.8rem">${w("use_version").replace("{version}", '<span id="version"></span>').replace("{update}", '<span id="update" hidden>' + w("use_update") + "</span>")}</p>
   </section>
+
+  <section class="card">
+    <h2>${w("assistant_title")}</h2>
+    <p class="muted">${w("assistant_help")}</p>
+    <div class="row" style="margin-top:.6rem"><input id="assistant-url" readonly><button id="assistant-copy">${w("assistant_copy")}</button></div>
+    <p id="assistant-status" class="status" hidden></p>
+    <ul class="devices" id="assistants"></ul>
+  </section>
 </div>
 <script src="/setup.js"></script></main></body></html>`;
 
@@ -151,7 +159,27 @@ async function load() {
   }
   $("version").textContent = s.version; $("update").hidden = !s.update_available;
   showFeed(await api("GET", "/calendar/feed").catch(() => null));
+  showAssistants(await api("GET", "/connector/grants").catch(() => null));
 }
+
+function showAssistants(a) {
+  if (!a) return;
+  $("assistant-url").value = a.url;
+  const ul = $("assistants"); ul.textContent = "";
+  if (!a.grants.length) { const li = document.createElement("li"); li.className = "muted"; li.textContent = ${j("assistant_none")}; ul.append(li); }
+  for (const g of a.grants) {
+    const li = document.createElement("li"); const left = document.createElement("span");
+    left.textContent = ${j("assistant_line")}.replace("{name}", () => g.name).replace("{date}", new Date(g.created_at).toLocaleDateString())
+      .replace("{used}", g.last_used_at ? new Date(g.last_used_at).toLocaleDateString() : ${j("device_never")});
+    const b = document.createElement("button"); b.textContent = ${j("assistant_remove")};
+    b.onclick = async () => { if (!confirm(${j("assistant_remove_confirm")}.replace("{name}", () => g.name))) return; await api("DELETE", "/connector/grants/" + encodeURIComponent(g.id)); showAssistants(await api("GET", "/connector/grants").catch(() => null)); };
+    li.append(left, b); ul.append(li);
+  }
+}
+$("assistant-copy").onclick = async () => {
+  try { await navigator.clipboard.writeText($("assistant-url").value); } catch { $("assistant-url").select(); }
+  status($("assistant-status"), ${j("assistant_copied")}, true); $("assistant-status").hidden = false;
+};
 
 let feedUrl = "";
 function showFeed(f) {
@@ -220,6 +248,60 @@ document.getElementById("use").onclick = async () => {
   try { localStorage.setItem("managemint.token", d.token); } catch {}
   location.href = "/app/";
 };
+`;
+
+// /oauth/authorize: an assistant app (for example a custom connector) asks to use this server. See oauth.ts.
+// The app's name comes from its own registration, so the page also says to allow it only if you just added it.
+export const AUTHORIZE_HTML = `<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>${w("connect_page_title")}</title>
+<link rel="icon" href="/app/icon.svg"><style>${STYLE}</style></head><body><main>
+<img class="logo" src="/app/icon.svg" alt="">
+<h1>${w("connect_title")}</h1>
+<section class="card" id="ask" hidden>
+  <h2 id="ask-title"></h2>
+  <p>${w("connect_can")}</p>
+  <p class="muted">${w("connect_cannot")}</p>
+  <p class="muted">${w("connect_only_if")}</p>
+  <form id="form" style="margin-top:.8rem">
+    <p id="pw-row"><input id="password" type="password" autocomplete="current-password" placeholder="${w("login_placeholder")}"></p>
+    <p id="signed-in" class="muted" hidden>${w("connect_signed_in")}</p>
+    <div class="row" style="margin-top:.6rem"><button class="primary" type="submit">${w("connect_allow")}</button>
+    <button type="button" id="cancel">${w("connect_cancel")}</button></div>
+  </form>
+</section>
+<p id="msg" class="status" hidden></p>
+<script src="/oauth/authorize.js"></script></main></body></html>`;
+
+export const AUTHORIZE_JS = `"use strict";
+const $ = (id) => document.getElementById(id);
+const params = Object.fromEntries(new URLSearchParams(location.search));
+const token = (() => { try { return localStorage.getItem("managemint.token"); } catch { return null; } })();
+const say = (text, ok) => { const m = $("msg"); m.textContent = text; m.className = "status " + (ok ? "ok" : "warn"); m.hidden = false; };
+async function post(path, body, withToken) {
+  const r = await fetch(path, { method: "POST", headers: { "content-type": "application/json", ...(withToken && token ? { authorization: "Bearer " + token } : {}) }, body: JSON.stringify(body), cache: "no-store" });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(d.error || ("HTTP " + r.status));
+  return d;
+}
+let signedIn = false;
+(async () => {
+  try {
+    const d = await post("/oauth/check", { params }, true);
+    signedIn = d.signed_in;
+    $("ask-title").textContent = ${j("connect_ask")}.replace("{name}", () => d.client_name);
+    $("pw-row").hidden = signedIn; $("signed-in").hidden = !signedIn; $("password").required = !signedIn;
+    $("ask").hidden = false;
+  } catch (e) { say(e.message, false); }
+})();
+$("form").onsubmit = async (ev) => {
+  ev.preventDefault();
+  try {
+    const d = await post("/oauth/approve", { params, password: signedIn ? undefined : $("password").value }, signedIn);
+    $("ask").hidden = true; say(${j("connect_done")}, true);
+    location.href = d.redirect;
+  } catch (e) { say(e.message, false); }
+};
+$("cancel").onclick = () => { $("ask").hidden = true; say(${j("connect_cancelled")}, false); };
 `;
 
 /** Strict headers for these pages (same idea as the desktop app's). */

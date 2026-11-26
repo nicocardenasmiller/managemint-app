@@ -2,15 +2,17 @@ import { parseTranscript, type ProjectRow } from "./capture";
 import { calendarEnabled, syncTaskEvents, type CalTask } from "./calendar";
 import type { DraftTask } from "./postprocess";
 import { slug, validateBulk, type BulkBody } from "./bulk";
-import { authenticate, bump, checkSetupPassword, cleanName, createDevice, getSetting, peek, setSetting, recordFailure, setupConfigured, startPairing, tooManyFailures, usePairCode } from "./access";
+import { authenticate, bump, checkSetupPassword, cleanName, clientIp, createDevice, getSetting, peek, setSetting, recordFailure, setupConfigured, startPairing, tooManyFailures, usePairCode } from "./access";
 import { credentialsSource, disconnectGoogle, finishGoogle, startGoogle, withGoogleSettings } from "./google-connect";
-import { PAGE_HEADERS, PAIR_HTML, PAIR_JS, SETUP_HTML, SETUP_JS } from "./setup-page";
+import { AUTHORIZE_HTML, AUTHORIZE_JS, PAGE_HEADERS, PAIR_HTML, PAIR_JS, SETUP_HTML, SETUP_JS } from "./setup-page";
 import qrcode from "qrcode-generator";
 import { VERSION, compareVersions, latestRelease } from "./version";
 import { MAX_NOTES, guidelinesText, proposePlan } from "./onboarding";
 import { chatTurn, cleanMessages, type ProjectInfo, type TemplateRow } from "./project-chat";
 import { defaultAnchor, fromProject, type SectionRow, type TaskRow as TplTaskRow } from "./templates";
 import { serverWording as sw } from "./wording";
+import { handleMcp } from "./connector";
+import { authServerMetadata, authenticateConnector, challenge, checkAuthRequest, exchangeToken, issueCode, listGrants, protectedResourceMetadata, registerClient, revokeGrant } from "./oauth";
 import { FEED_PATH, buildIcs, feedLinks, feedToken, feedTokenMatches, feedTasks, resetFeedToken } from "./feed";
 
 export interface Env {
@@ -226,6 +228,50 @@ export default {
       });
     }
 
+    // ---- assistant connector (connector.ts) and its sign-in (oauth.ts) ----
+    const origin = url.origin;
+    if (path === "/.well-known/oauth-protected-resource" || path === "/.well-known/oauth-protected-resource/mcp")
+      return json(protectedResourceMetadata(origin));
+    if (path === "/.well-known/oauth-authorization-server") return json(authServerMetadata(origin));
+    if (path === "/oauth/register" && req.method === "POST") {
+      if ((await bump(env, `oauth-register:${clientIp(req)}`, 3600)) > 20) return json({ error: "slow_down" }, 429);
+      const r = await registerClient(env, (await req.json().catch(() => ({}))) as Record<string, unknown>);
+      return json(r, "error" in r ? 400 : 201);
+    }
+    if (path === "/oauth/authorize" && req.method === "GET") return page(AUTHORIZE_HTML, "text/html");
+    if (path === "/oauth/authorize.js") return page(AUTHORIZE_JS, "text/javascript");
+    // POST /oauth/check {params} → {client_name} so the page can say who is asking; POST /oauth/approve {params, password?}
+    // (or a signed-in device's token) → {redirect}. Problems with the request are shown on the page, never redirected.
+    if ((path === "/oauth/check" || path === "/oauth/approve") && req.method === "POST") {
+      const b = (await req.json().catch(() => ({}))) as { params?: Record<string, unknown>; password?: unknown };
+      const ar = await checkAuthRequest(env, origin, b.params ?? {});
+      if ("error" in ar) {
+        const why = { unknown_client: sw("oauth_unknown_client"), bad_redirect: sw("oauth_bad_redirect"), bad_request: sw("oauth_bad_request") };
+        return json({ error: why[ar.error as keyof typeof why] ?? why.bad_request }, 400);
+      }
+      if (path === "/oauth/check") return json({ client_name: ar.client_name, signed_in: Boolean(await authenticate(req, env, ctx)) });
+      if (!(await authenticate(req, env, ctx))) {
+        if (await tooManyFailures(env, "login", req)) return json({ error: sw("too_many_attempts") }, 429);
+        if (!checkSetupPassword(b.password, env)) { await recordFailure(env, "login", req); return json({ error: sw("wrong_password") }, 401); }
+      }
+      return json({ redirect: await issueCode(env, origin, ar) });
+    }
+    if (path === "/oauth/token" && req.method === "POST") {
+      if (await tooManyFailures(env, "token", req)) return json({ error: "slow_down" }, 429);
+      const type = req.headers.get("content-type") ?? "";
+      const p: Record<string, string> = type.includes("application/json")
+        ? Object.fromEntries(Object.entries((await req.json().catch(() => ({}))) as Record<string, unknown>).map(([k, v]) => [k, String(v)]))
+        : Object.fromEntries(new URLSearchParams(await req.text()));
+      const r = await exchangeToken(env, p);
+      if (r.status !== 200) await recordFailure(env, "token", req);
+      return new Response(JSON.stringify(r.body), { status: r.status, headers: { "content-type": "application/json", "cache-control": "no-store", pragma: "no-cache", ...cors } });
+    }
+    if (path === "/mcp") {
+      if (!(await authenticateConnector(req, env)))
+        return new Response(JSON.stringify({ error: "unauthorized" }), { status: 401, headers: { "content-type": "application/json", "www-authenticate": challenge(origin, req.headers.has("authorization") ? "invalid_token" : undefined) } });
+      return handleMcp(req, env);
+    }
+
     const deviceId = await authenticate(req, env, ctx);
     if (!deviceId) return json({ error: "unauthorized" }, 401);
     env = await withGoogleSettings(env);
@@ -276,6 +322,11 @@ export default {
         const links = feedLinks(url.origin, token);
         const qr = qrcode(0, "M"); qr.addData(links.webcal); qr.make();
         return json({ ...links, qr_svg: qr.createSvgTag({ cellSize: 4, margin: 2, scalable: true }) });
+      }
+      // GET /connector/grants → assistants approved to use the connector. DELETE /connector/grants/:id signs one out.
+      if (seg[0] === "connector" && seg[1] === "grants") {
+        if (seg.length === 2 && req.method === "GET") return json({ url: `${url.origin}/mcp`, grants: await listGrants(env) });
+        if (seg.length === 3 && req.method === "DELETE") { await revokeGrant(env, seg[2]); return json({ ok: true }); }
       }
       if (seg[0] === "google" && seg[1] === "start" && req.method === "POST") {
         try { return json({ url: await startGoogle(env, url.origin) }); }
