@@ -42,11 +42,21 @@ const priorityName = (p: number) => (p === 1 ? "high" : p === 2 || p === 3 ? "me
 const PROTOCOLS = ["2025-06-18", "2025-03-26", "2024-11-05"];
 
 // Instructions and tool descriptions are read by the assistant, not shown to people, so they stay in code.
+/** How checklists should read, so they fit the app's checklist card (docs/design/checklists.md). Shared by the
+ *  instructions and the add_task / add_checklist descriptions. */
+export const CHECKLIST_STYLE =
+  "A checklist item is one concrete step the user can tick off in one sitting. Start each item with a verb " +
+  "(\"Email Maria the draft\", not \"Draft\" or \"Maria\"). Keep items short: about 3 to 8 words, under 60 characters, one line on a phone; " +
+  "put explanations in the task's notes, not in items. No numbering, bullets, checkboxes, emoji or trailing periods. " +
+  "List items in the order they will be done. Aim for 3 to 10 items; if a task needs more than about 12, suggest splitting it into " +
+  "separate tasks instead. Don't repeat items already on the checklist (the server skips exact repeats) and don't add an item that " +
+  "just restates the task title. Don't tick items or rename them unless the user asks. add_checklist appends to the end; " +
+  "it can't reorder or remove items, so tell the user when they need to do that in the app.";
+
 const INSTRUCTIONS =
   "Managemint is the user's task planner. Use find_tasks to locate a task (search by words in its title), then get_task to see its " +
-  "notes and current checklist before changing anything. add_checklist adds items to the end of a task's checklist; prefer short, " +
-  "concrete steps (one action each, a few words to one line). Don't add items that are already on the checklist. " +
-  "If several tasks match, ask the user which one they mean instead of guessing. " +
+  "notes and current checklist before changing anything. If several tasks match, ask the user which one they mean instead of guessing. " +
+  "Checklists: " + CHECKLIST_STYLE + " " +
   "Dates are YYYY-MM-DD in the user's time zone; find_tasks returns today's date. To answer questions like \"what's due this week\" " +
   "use find_tasks with due_from/due_to, or overdue. add_task creates a new task: use due_date for when the user plans to do it and " +
   "deadline only when they say it's a hard deadline (\"deadline\", \"has to be done by\", \"must\"). Before adding several tasks, " +
@@ -103,7 +113,7 @@ export const TOOLS = [
         due_time: { ...str, description: "HH:MM, 24-hour; needs due_date." },
         deadline: { ...str, description: "YYYY-MM-DD: hard deadline, only when the user says so." },
         priority: { type: "string", enum: ["high", "medium", "none"], description: "Default none." },
-        checklist: { type: "array", items: str, maxItems: MAX_ITEMS_PER_CALL, description: "Optional checklist items, in order." },
+        checklist: { type: "array", items: str, maxItems: MAX_ITEMS_PER_CALL, description: "Optional checklist items, in the order they'll be done. Short verb-first steps (see the server instructions)." },
       },
       required: ["title"],
       additionalProperties: false,
@@ -113,12 +123,12 @@ export const TOOLS = [
   {
     name: "add_checklist",
     description: `Add checklist items to the end of a task's checklist (at most ${MAX_ITEMS_PER_CALL} per call). Works on top-level tasks only. ` +
-      "Returns the task's full checklist afterwards.",
+      "Returns the task's full checklist afterwards, and any items skipped because they were already on it. " + CHECKLIST_STYLE,
     inputSchema: {
       type: "object",
       properties: {
         task_id: { ...str, description: "The task id from find_tasks." },
-        items: { type: "array", items: str, minItems: 1, maxItems: MAX_ITEMS_PER_CALL, description: "Item titles, in order." },
+        items: { type: "array", items: str, minItems: 1, maxItems: MAX_ITEMS_PER_CALL, description: "Item titles in the order they'll be done, e.g. [\"Reread Maria's comments\", \"Fix the coding table\", \"Send the draft to Maria\"]." },
       },
       required: ["task_id", "items"],
       additionalProperties: false,
@@ -133,7 +143,7 @@ export const TOOLS = [
       properties: {
         item_id: { ...str, description: "The checklist item id from get_task." },
         done: { type: "boolean", description: "true to tick, false to untick." },
-        title: { ...str, description: "New title." },
+        title: { ...str, description: "New title: a short step starting with a verb." },
       },
       required: ["item_id"],
       additionalProperties: false,
@@ -152,6 +162,16 @@ class ToolError extends Error {}
 
 const nowIso = () => new Date().toISOString();
 const cleanTitle = (s: unknown) => (typeof s === "string" ? s.replace(/[\u0000-\u001f]+/g, " ").replace(/\s+/g, " ").trim().slice(0, MAX_TITLE) : "");
+/** A checklist item title without list markers an assistant might add ("- ", "1. ", "[ ] ", "☐ "). Same markers as the apps' paste rule. */
+const itemTitle = (s: unknown) => cleanTitle(typeof s === "string" ? s.replace(/^\s*(?:[-*•–]\s+|\d+[.)]\s+)?(?:\[[ xX]?\]\s*|[☐☑✓✔]\s*)?/, "") : s);
+const sameItem = (s: string) => s.toLowerCase().replace(/[.!]+$/, "").trim();
+/** Drop items already on the checklist (or repeated in the same call), ignoring case and a trailing period. */
+function withoutRepeats(titles: string[], existing: string[]) {
+  const seen = new Set(existing.map(sameItem));
+  const keep: string[] = [], skipped: string[] = [];
+  for (const t of titles) { const k = sameItem(t); (seen.has(k) ? skipped : keep).push(t); seen.add(k); }
+  return { keep, skipped };
+}
 
 async function liveTask(env: AccessEnv, id: unknown): Promise<TaskRow> {
   if (typeof id !== "string" || !id) throw new ToolError("task_id is required.");
@@ -239,7 +259,7 @@ async function addTask(env: ConnectorEnv, a: Json) {
   const end = (a.due_date ?? a.deadline) as string | undefined;
   if (a.start_date && end && (a.start_date as string) > end) throw new ToolError("start_date is after the due date.");
   if (a.priority !== undefined && !(typeof a.priority === "string" && a.priority in PRIORITY)) throw new ToolError("priority must be high, medium or none.");
-  const items = a.checklist === undefined ? [] : Array.isArray(a.checklist) ? a.checklist.map(cleanTitle).filter(Boolean) : null;
+  const items = a.checklist === undefined ? [] : Array.isArray(a.checklist) ? withoutRepeats(a.checklist.map(itemTitle).filter(Boolean), []).keep : null;
   if (!items) throw new ToolError("checklist must be a list of item titles.");
   if (items.length > MAX_ITEMS_PER_CALL) throw new ToolError(`At most ${MAX_ITEMS_PER_CALL} checklist items.`);
   const day = new Date().toISOString().slice(0, 10);
@@ -274,13 +294,14 @@ async function addChecklist(env: AccessEnv, a: Json) {
   if (t.parent_id) throw new ToolError("That's a checklist item, not a task. Add items to its task instead (checklist_item_of in get_task).");
   if (!Array.isArray(a.items) || !a.items.length) throw new ToolError("items must be a non-empty list of titles.");
   if (a.items.length > MAX_ITEMS_PER_CALL) throw new ToolError(`At most ${MAX_ITEMS_PER_CALL} items per call.`);
-  const titles = a.items.map(cleanTitle).filter(Boolean);
-  if (!titles.length) throw new ToolError("All the item titles were empty.");
-  const existing = await env.DB.prepare("SELECT COUNT(*) AS n, MAX(sort) AS m FROM tasks WHERE parent_id = ? AND deleted_at IS NULL")
-    .bind(t.id).first<{ n: number; m: number | null }>();
-  if ((existing?.n ?? 0) + titles.length > MAX_ITEMS_PER_TASK) throw new ToolError(`A checklist can have at most ${MAX_ITEMS_PER_TASK} items.`);
-  await insertItems(env, t, titles, existing?.n ? (existing.m ?? 0) + 1 : 0);
-  return { task_id: t.id, title: t.title, added: titles.length, checklist: await checklist(env, t.id) };
+  const cleaned = a.items.map(itemTitle).filter(Boolean);
+  if (!cleaned.length) throw new ToolError("All the item titles were empty.");
+  const rows = (await env.DB.prepare("SELECT title, sort FROM tasks WHERE parent_id = ? AND deleted_at IS NULL")
+    .bind(t.id).all<{ title: string; sort: number }>()).results ?? [];
+  const { keep: titles, skipped } = withoutRepeats(cleaned, rows.map((r) => r.title));
+  if (rows.length + titles.length > MAX_ITEMS_PER_TASK) throw new ToolError(`A checklist can have at most ${MAX_ITEMS_PER_TASK} items.`);
+  if (titles.length) await insertItems(env, t, titles, rows.length ? Math.max(...rows.map((r) => r.sort)) + 1 : 0);
+  return { task_id: t.id, title: t.title, added: titles.length, ...(skipped.length ? { skipped_already_on_checklist: skipped } : {}), checklist: await checklist(env, t.id) };
 }
 
 async function updateItem(env: AccessEnv, a: Json) {
@@ -289,7 +310,7 @@ async function updateItem(env: AccessEnv, a: Json) {
   const sets: string[] = [], vals: unknown[] = [];
   if (typeof a.done === "boolean") { sets.push("status = ?", "completed_at = ?"); vals.push(a.done ? "done" : "todo", a.done ? nowIso() : null); }
   if (a.title !== undefined) {
-    const title = cleanTitle(a.title);
+    const title = itemTitle(a.title);
     if (!title) throw new ToolError("title can't be empty.");
     sets.push("title = ?"); vals.push(title);
   }
